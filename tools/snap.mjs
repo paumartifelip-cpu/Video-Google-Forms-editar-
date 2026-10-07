@@ -3,7 +3,7 @@ import { createRequire } from "module"; const require = createRequire(import.met
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 import path from "path"; import fs from "fs";
 const [out, ...ts] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
-const V = process.env.VERTICAL === "1", FILE = V ? "rumbo-motion-vertical.html" : "rumbo-motion.html";
+const V = process.env.VERTICAL === "1", FILE = process.env.FILE || (V ? "rumbo-motion-vertical.html" : "rumbo-motion.html");
 const VP = process.env.VW ? { width:+process.env.VW, height:+process.env.VH } : (V ? { width:1080, height:1920 } : { width:1920, height:1080 });
 const file = "file://" + path.resolve(path.dirname(new URL(import.meta.url).pathname), "../" + FILE) + "?controls=0&autoplay=0" + (process.env.Q||"");
 const b = await pw.chromium.launch(); const p = await b.newPage({ viewport: VP, deviceScaleFactor: +(process.env.DPR||1) });
