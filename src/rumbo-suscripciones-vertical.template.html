@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rumbo · Suscripciones, ingresos y moneda · Vertical</title>
+<style>
+/*__FONTS__*/
+:root{
+  --cream:#F7F5F0; --ink:#0B1220; --grey:#6B7280;
+  --green:#16B47E; --greenDeep:#0F6B45; --coral:#E0533F;
+  --ui:"RInter","Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"RDisplay","Inter Display","Inter",system-ui,-apple-system,sans-serif;
+  --emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#15171C;color:#E8E8EA;font-family:var(--ui);overflow:hidden}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;overflow:hidden;
+  background:var(--cream);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;contain:strict}
+#stage .bgglow{position:absolute;inset:0;background:radial-gradient(900px 1300px at 50% 46%,rgba(255,255,255,.78),rgba(255,255,255,0) 70%)}
+#world{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:500px 1000px}
+.emo{font-family:var(--emoji);line-height:1}
+.num{font-variant-numeric:tabular-nums}
+
+/* --- tarjeta de suscripción / ingreso (tres capas: grande, fila, icono) --- */
+.k{position:absolute;overflow:hidden;background:#fff;border-radius:28px;border:0 solid #fff;
+  box-shadow:0 16px 36px rgba(30,30,50,.09),0 2px 6px rgba(30,30,50,.05);will-change:transform,opacity}
+.k .big{position:absolute;left:0;top:0;transform-origin:0 0}
+.k .tile{position:absolute;left:24px;top:37px;width:76px;height:76px;border-radius:22px;display:grid;place-items:center;font-size:40px}
+.k .nm{position:absolute;left:120px;top:30px;right:186px;font:700 36px/1.1 var(--ui);letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k .pr{position:absolute;right:28px;top:50px;white-space:nowrap}
+.k .pr b{font:800 52px/1 var(--display);letter-spacing:-.03em}
+.k .pr i{font:500 22px/1 var(--ui);font-style:normal;color:#8A909B;margin-left:6px}
+.k .bd{position:absolute;left:120px;bottom:22px;height:38px;border-radius:20px;padding:0 16px 0 12px;display:flex;align-items:center;gap:8px;
+  background:#EEF2F7;font:600 22px/1 var(--ui);color:#4B5160;white-space:nowrap}
+.k .mini{position:absolute;left:0;top:0;height:100%;width:100%;display:flex;align-items:center;gap:14px;padding:0 20px 0 10px;white-space:nowrap}
+.k .mini .mt{flex:none;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:28px}
+.k .mini .mn{flex:1;font:700 31px/1 var(--ui);letter-spacing:-.01em}
+.k .mini .mp{font:800 26px/1 var(--display);letter-spacing:-.02em}
+.k .tm{position:absolute;inset:0;display:grid;place-items:center}
+.sub .pr b,.sub .mini .mp{color:var(--coral)}
+.inc{border-color:#BCEBD5}
+.inc .pr b,.inc .mini .mp{color:#12945F}
+.inc .bd{background:#E3F6EC;color:#0F6B45}
+
+/* --- formulario --- */
+.form{position:absolute;left:0;top:0}
+.form .ttl{position:absolute;left:48px;top:40px;font:800 42px/1 var(--display);letter-spacing:-.03em}
+.inp{position:absolute;height:88px;border-radius:22px;border:2px solid #E7E4DC;background:#FBFAF7;display:flex;align-items:center;gap:12px;
+  padding:0 24px;font:600 32px/1 var(--ui);white-space:nowrap;overflow:hidden}
+.caret{display:inline-block;width:3px;height:38px;background:var(--green);border-radius:2px}
+.tog{position:absolute;height:96px;border-radius:22px;background:#F4F2ED;display:flex;align-items:center;padding:0 24px;gap:16px}
+.tog .tl{font:700 30px/1.1 var(--ui)}
+.tog .ts{font:500 22px/1.2 var(--ui);color:#7A808C}
+.sw{position:absolute;width:96px;height:54px;border-radius:27px;background:#D5D2CB}
+.sw .kn{position:absolute;left:5px;top:5px;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.btn{position:absolute;height:76px;border-radius:22px;background:var(--green);color:#fff;font:700 32px/76px var(--ui);text-align:center;
+  box-shadow:0 12px 26px rgba(22,180,126,.32)}
+.btn span{position:absolute;inset:0}
+
+#cursor{position:absolute;left:0;top:0;width:68px;height:68px;transform-origin:8px 6px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.22));z-index:30}
+
+/* --- paneles --- */
+.panel{position:absolute;background:#fff;border-radius:40px;box-shadow:0 30px 70px rgba(30,30,50,.08),0 3px 10px rgba(30,30,50,.04)}
+.ph{position:absolute;left:0;top:0;width:100%;height:100%}
+.p-ttl{position:absolute;font:800 44px/1 var(--display);letter-spacing:-.03em;white-space:nowrap}
+.p-sub{position:absolute;font:600 32px/1 var(--ui);color:#5B6170;white-space:nowrap}
+.p-tot{position:absolute;white-space:nowrap;text-align:right}
+.p-tot b{font:900 104px/1 var(--display);letter-spacing:-.05em}
+.p-tot i{font:600 34px/1 var(--ui);font-style:normal;color:#8A909B;margin-left:8px}
+#incP{background:#F3FBF7;border:3px solid #BCEBD5}
+.ic-ico{position:absolute;width:76px;height:76px;border-radius:50%;background:#16B47E;display:grid;place-items:center;font-size:36px;box-shadow:0 10px 22px rgba(22,180,126,.3)}
+.chipf{position:absolute;height:60px;padding:0 24px;border-radius:30px;background:#16B47E;color:#fff;font:800 34px/60px var(--ui);white-space:nowrap;z-index:25;
+  box-shadow:0 10px 20px rgba(22,180,126,.3)}
+
+/* --- moneda --- */
+.cur{position:absolute;background:#fff;border:2px solid #ECE9E2;border-radius:26px;overflow:visible}
+.cur .fl{position:absolute;left:0;right:0;text-align:center;top:24px;font-size:62px}
+.cur .cd{position:absolute;left:0;right:0;text-align:center;top:100px;font:800 52px/1 var(--display);letter-spacing:-.02em}
+.cur .cn{position:absolute;left:10px;right:10px;text-align:center;top:156px;font:500 26px/1.1 var(--ui);color:#6B7280;white-space:nowrap}
+.cur .ck{position:absolute;right:-12px;top:-12px;width:46px;height:46px;border-radius:50%;background:#16B47E;color:#fff;font:800 26px/46px var(--ui);
+  text-align:center;border:4px solid #fff;box-shadow:0 6px 14px rgba(22,180,126,.35)}
+.globe{position:absolute;width:76px;height:76px;border-radius:50%;background:#F1EFEA;display:grid;place-items:center;font-size:44px}
+
+/* --- titulares --- */
+.cap{position:absolute;font-family:var(--display);font-weight:800;letter-spacing:-.035em;color:var(--ink)}
+.cap .ln{display:block;white-space:nowrap;line-height:1.08}
+.cap .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .14em;margin-bottom:-.14em}
+.cap .wi{display:inline-block;will-change:transform}
+.cap .sp{display:inline-block;width:.26em}
+#sub4{position:absolute;left:0;top:0;width:760px;font:500 31px/1.35 var(--ui);color:#4B5160}
+#sub4 b{color:var(--ink);font-weight:700}
+
+/* --- cierre --- */
+#brand{position:absolute;left:80px;top:600px;width:840px;text-align:center;font:900 256px/1 var(--display);letter-spacing:-.06em;white-space:nowrap}
+#brand .m{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .01em .06em}
+#brand .l{display:inline-block}
+#tagline{position:absolute;left:80px;top:900px;width:840px;text-align:center;font:800 50px/1.34 var(--display);letter-spacing:.2em;color:#5B6170;white-space:nowrap}
+#tagline b{color:var(--green);font-weight:800}
+#url{position:absolute;left:500px;top:1080px;height:104px;padding:0 48px;border-radius:52px;background:var(--green);color:#fff;
+  font:700 42px/104px var(--ui);white-space:nowrap;box-shadow:0 18px 36px rgba(22,180,126,.30);transform-origin:50% 50%}
+
+#safe{position:absolute;inset:0;pointer-events:none;display:none;z-index:50}
+#safe div{position:absolute;background:repeating-linear-gradient(45deg,rgba(255,0,80,.16) 0 14px,rgba(255,0,80,.05) 14px 28px)}
+#app.safe #safe{display:block}
+
+/* --- controles --- */
+#controls{flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px;background:#1C1F26;border-top:1px solid #2A2E37;flex-wrap:wrap}
+#controls button{background:#2A2E37;color:#F1F1F3;border:0;border-radius:10px;height:38px;min-width:38px;padding:0 14px;font:600 14px var(--ui);cursor:pointer}
+#controls button:hover{background:#353A45}
+#controls button.primary{background:#16B47E;color:#fff}
+#scrubWrap{flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px}
+#scrub{width:100%;accent-color:#16B47E}
+#marks{position:relative;height:16px;font:500 11px/16px var(--ui);color:#9AA0AB}
+#marks span{position:absolute;transform:translateX(-50%);cursor:pointer;white-space:nowrap}
+#marks span:hover{color:#fff}
+#time{font:600 14px var(--ui);font-variant-numeric:tabular-nums;color:#C9CCD3;min-width:118px;text-align:center}
+#app.rec #controls{display:none}
+#app.rec{background:#000}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font:600 18px var(--ui);color:#9AA0AB;background:#15171C;z-index:5}
+#hint{position:fixed;right:16px;bottom:16px;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font:500 13px var(--ui);opacity:0;transition:opacity .4s;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="viewport">
+    <div id="stage"><div class="bgglow"></div><div id="world"></div><div id="caps"></div>
+      <div id="safe"><div style="left:0;top:0;right:0;height:180px"></div><div style="left:0;bottom:0;right:0;height:320px"></div>
+        <div style="left:0;top:180px;bottom:320px;width:80px"></div><div style="right:0;top:180px;bottom:320px;width:160px"></div></div>
+    </div>
+    <div id="loading">Cargando recursos…</div>
+  </div>
+  <div id="controls">
+    <button id="bPlay" class="primary" title="Reproducir / pausar (espacio)">▶ Reproducir</button>
+    <button id="bRestart" title="Reiniciar (R)">↺ Reiniciar</button>
+    <div id="scrubWrap"><input id="scrub" type="range" min="0" max="25" step="0.001" value="0"><div id="marks"></div></div>
+    <div id="time">00.00 / 25.00 s</div>
+    <button id="bSafe" title="Zonas de seguridad (S)">Zonas seguras</button>
+    <button id="bHide" title="Ocultar controles (H)">Ocultar controles</button>
+  </div>
+</div>
+<div id="hint">Pulsa H para volver a mostrar los controles</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   RUMBO · "Lo que pagas, lo que entra, tu moneda" — 25 s, VERTICAL 9:16
+   Composición 1080×1920 recompuesta para móvil (no es un recorte de la horizontal).
+   Un único reloj maestro: render(t). Textos, datos y tiempos en CONFIG.
+   Zona segura: x 80–920, y 180–1600 (arriba 180, abajo 320, derecha 160,
+   izquierda 80 libres de información esencial).
+   ===================================================================== */
+const CONFIG = {
+  duration: 25,
+  text: {
+    s1a: [["Una","suscripción"],["más…"]],
+    s1b: [["¿Y","ya","van"],["cuántas?"]],
+    s2:  [["Apúntalas."],[{w:"Míralas",late:1},{w:"juntas.",late:1}]],
+    s3a: [["¿Y","el","dinero"],["que",{w:"entra?",c:"#12945F"}]],
+    s3b: [["Tus","ingresos,"],["en","un","vistazo."]],
+    s4a: [["Y","en","tu"],[{w:"moneda.",c:"#12945F"}]],
+    s4b: [["Tú","eliges"],["la","moneda","principal."]],
+    sub4: "Todos los totales se muestran en tu <b>moneda principal</b>. Puedes elegir otra al añadir un gasto.",
+    c1: [[{w:"Lo",c:"#E0533F"},{w:"que",c:"#E0533F"},{w:"pagas.",c:"#E0533F"}]],
+    c2: [[{w:"Lo",c:"#12945F"},{w:"que",c:"#12945F"},{w:"entra.",c:"#12945F"}]],
+    c3: [["Todo","más","claro."]],
+    brand: "rumbo", tagA: "MENOS RUIDO, ", tagB: "MÁS RUMBO", url: "Empieza en usarumbo.com",
+    subsTitle: "Suscripciones activas", incTitle: "Ingresos recurrentes mensuales", curTitle: "Moneda principal",
+  },
+  // Datos ficticios. Suscripciones: 20+10+15+25+5 = 75 €/mes (5). Ingresos: 200+150+250 = 600 €/mes registrados (3).
+  subs: [
+    {id:"herr",   e:"🛠️", name:"Herramientas",   v:20, tile:"#C3E6FF", closeTile:"#FFB4A6"},
+    {id:"musica", e:"🎵", name:"Música",         v:10, tile:"#EBCBFB", closeTile:"#FFC6BB"},
+    {id:"series", e:"🎬", name:"Series",         v:15, tile:"#FFD0C9", closeTile:"#FFA897"},
+    {id:"gym",    e:"🏋️", name:"Gimnasio",       v:25, tile:"#FFE38A", closeTile:"#FFBFB1"},
+    {id:"cloud",  e:"☁️", name:"Almacenamiento", v:5,  tile:"#C6F1DE", closeTile:"#FFD3CA"},
+  ],
+  incomes: [
+    {id:"a", e:"💼", name:"Cliente A", v:200, closeTile:"#86EFAC"},
+    {id:"b", e:"🤝", name:"Cliente B", v:150, closeTile:"#B6F2CF"},
+    {id:"c", e:"🎓", name:"Clases",    v:250, closeTile:"#9BE7C4"},
+  ],
+  currencies: [
+    ["🇪🇺","EUR","Euros"],["🇺🇸","USD","Dólares estadounidenses"],["🇲🇽","MXN","Pesos mexicanos"],["🇦🇷","ARS","Pesos argentinos"],
+    ["🇨🇴","COP","Pesos colombianos"],["🇨🇱","CLP","Pesos chilenos"],["🇵🇪","PEN","Soles peruanos"],["🇵🇾","PYG","Guaraníes paraguayos"],
+  ],
+  pick: 2, // MXN
+  scenes: [["Una más",0],["Apúntalas",3.95],["Lo que entra",8.9],["Tu moneda",14.9],["Cierre",20.55]],
+};
+
+/* ======================= tiempo y curvas ======================= */
+function bezier(x1,y1,x2,y2){
+  const A=(a,b)=>1-3*b+3*a, B=(a,b)=>3*b-6*a, C=a=>3*a;
+  const calc=(t,a,b)=>((A(a,b)*t+B(a,b))*t+C(a))*t, slope=(t,a,b)=>3*A(a,b)*t*t+2*B(a,b)*t+C(a);
+  return x=>{ if(x<=0) return 0; if(x>=1) return 1;
+    let t=x; for(let i=0;i<8;i++){ const s=slope(t,x1,x2); if(Math.abs(s)<1e-6) break; t-=(calc(t,x1,x2)-x)/s; }
+    let lo=0,hi=1; if(Math.abs(calc(t,x1,x2)-x)>1e-5){ t=x; for(let i=0;i<30;i++){ const v=calc(t,x1,x2); if(v<x) lo=t; else hi=t; t=(lo+hi)/2; } }
+    return calc(t,y1,y2); };
+}
+const E = {
+  snap:bezier(.16,1,.3,1), brake:bezier(.05,.7,.1,1), settle:bezier(.25,1.32,.4,1), swift:bezier(.72,0,.18,1),
+  glide:bezier(.45,0,.2,1), inOut:bezier(.45,0,.55,1), out:bezier(.33,1,.68,1), exit:bezier(.6,0,.9,.45), anticip:bezier(.3,0,.7,1),
+  drop:bezier(.55,0,.85,.35),   // caída con peso: acelera hasta el impacto
+};
+const clamp=(v,a=0,b=1)=>v<a?a:v>b?b:v, lerp=(a,b,p)=>a+(b-a)*p, prog=(t,t0,d)=>clamp((t-t0)/d);
+function kf(t,k){ if(t<=k[0][0]) return k[0][1]; for(let i=1;i<k.length;i++){ if(t<=k[i][0]){ const p=k[i-1]; return lerp(p[1],k[i][1],(k[i][2]||E.inOut)((t-p[0])/(k[i][0]-p[0]))); } } return k[k.length-1][1]; }
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mixC=(a,b,p)=>{ const A=hex(a),B=hex(b); return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],clamp(p)))).join(",")})`; };
+const DEF={blur:0,tint:0,tile:0,miniO:0,lift:0,badge:1,bigO:1,price:1,s:1,o:1,rot:0};
+function mixPose(a,b,p){ const o={}, keys=new Set([...Object.keys(a),...Object.keys(b)]);
+  for(const k of keys){ const A=k in a?a[k]:DEF[k], B=k in b?b[k]:DEF[k]; o[k]=(typeof A==="number"&&typeof B==="number")?lerp(A,B,p):(p<.5?A:B); } return o; }
+const fmt=v=>String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+
+/* ======================= DOM ======================= */
+const $=s=>document.querySelector(s), world=$("#world"), caps=$("#caps");
+function el(tag,cls,parent,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; (parent||world).appendChild(e); return e; }
+const _c=new WeakMap();
+function S(e,p,v){ let m=_c.get(e); if(!m){m={};_c.set(e,m);} if(m[p]!==v){ m[p]=v; e.style[p]=v; } }
+function T(e,x){ if(e._t!==x){ e._t=x; e.textContent=x; } }
+const px=v=>v.toFixed(2)+"px";
+function vis(e,o){ S(e,"opacity",o<=0.001?"0":o>=0.999?"1":o.toFixed(3)); S(e,"visibility",o<=0.001?"hidden":"visible"); }
+const hide=e=>vis(e,0);
+function rect(e,x,y,w,h){ S(e,"left",px(x)); S(e,"top",px(y)); S(e,"width",px(Math.max(0,w))); S(e,"height",px(Math.max(0,h))); }
+const part=(t,e,t0,{dx=0,dy=0,d=.45,ease=E.snap,s0=1,keep=1}={})=>{ const p=ease(prog(t,t0,d)); S(e,"transform",`translate(${((1-p)*dx).toFixed(1)}px,${((1-p)*dy).toFixed(1)}px) scale(${lerp(s0,1,p).toFixed(4)})`); vis(e,clamp(p*1.6)*keep); return p; };
+
+const TX=CONFIG.text, SUBS=CONFIG.subs, INC=CONFIG.incomes;
+const SUM_SUBS=SUBS.reduce((a,b)=>a+b.v,0), SUM_INC=INC.reduce((a,b)=>a+b.v,0);
+console.assert(SUM_SUBS===75 && SUBS.length===5 && SUM_INC===600 && INC.length===3, "Datos incoherentes");
+
+/* ---- paneles ---- */
+const SP = {x:80,y:450,w:840,h:1100};           // "Suscripciones activas": lista de arriba abajo
+const SUMC = {x:80,y:452,w:840,h:164};          // resumen compacto arriba (escena 3)
+const IP = {x:80,y:646,w:840,h:900};            // "Ingresos recurrentes mensuales" debajo
+const CP = {x:80,y:452,w:840,h:1112};           // "Moneda principal": dos columnas
+
+const subP = el("div","panel"); subP.id="subP";
+subP.innerHTML=`<div class="ph" id="spBig"><div class="p-ttl" style="left:48px;top:46px;font-size:50px">${TX.subsTitle}</div><div class="p-sub num" style="left:48px;top:110px;font-size:34px"></div>
+  <div class="p-tot num" style="left:44px;top:164px;text-align:left"><b style="font-size:132px"></b><i style="font-size:40px">/mes</i></div></div>
+  <div class="ph" id="spMini"><div class="ic-ico" style="left:32px;top:44px;width:76px;height:76px;background:#F0574A;box-shadow:0 10px 22px rgba(240,87,74,.3)"><span class="emo">🔄</span></div>
+  <div class="p-ttl" style="left:128px;top:42px;font-size:44px">Suscripciones</div><div class="p-sub" style="left:128px;top:96px;font-size:30px">${SUBS.length} activas</div>
+  <div style="position:absolute;right:36px;top:46px;white-space:nowrap" class="num"><b style="font:900 76px/1 var(--display);letter-spacing:-.04em;color:#E0533F">${SUM_SUBS} €</b><i style="font:600 30px/1 var(--ui);font-style:normal;color:#8A909B;margin-left:6px">/mes</i></div></div>`;
+const SPb={ box:$("#spBig"), sub:subP.querySelector("#spBig .p-sub"), tot:subP.querySelector("#spBig .p-tot b"), mini:$("#spMini") };
+
+const incP = el("div","panel"); incP.id="incP";
+incP.innerHTML=`<div class="ph" id="ipH"><div class="ic-ico" style="left:40px;top:36px"><span class="emo">🔁</span></div>
+  <div class="p-ttl" style="left:136px;top:40px;font-size:40px;line-height:1.08">Ingresos recurrentes<br>mensuales</div><div class="p-sub num" style="left:40px;top:150px;font-size:31px"></div>
+  <div class="p-tot num" style="left:38px;top:196px;text-align:left"><b style="color:#0F6B45;font-size:124px">0 €</b><i style="font-size:36px">/mes registrados</i></div></div>`;
+const IPb={ head:$("#ipH"), sub:incP.querySelector(".p-sub"), tot:incP.querySelector(".p-tot b"), totBox:incP.querySelector(".p-tot") };
+
+const curP = el("div","panel"); curP.id="curP";
+curP.innerHTML=`<div class="globe emo" style="left:40px;top:34px">🌍</div><div class="p-ttl" style="left:136px;top:52px;font-size:48px">${TX.curTitle}</div>`;
+const curHead=[...curP.children];
+// la explicación vive dentro del panel, como en la app
+
+/* ---- tarjetas ---- */
+function makeCard(d,kind){
+  const k=el("div","k "+kind);
+  const amt = kind==="sub" ? `<b class="num">${d.v} €</b><i>/mes</i>` : `<b class="num">+${d.v} €</b><i>/mes</i>`;
+  k.innerHTML=`<div class="big"><div class="tile emo" style="background:${d.tile||"#BEF0D2"}">${d.e}</div><div class="nm">${d.name}</div>
+     <div class="pr">${amt}</div><div class="bd"><span class="emo">🔄</span><span class="bt">Mensual</span></div></div>
+     <div class="mini"><div class="mt emo" style="background:${kind==="sub"?"#FFD9D2":"#BEF0D2"}">${d.e}</div><div class="mn">${d.name}</div><div class="mp num">${kind==="sub"?d.v+" €":"+"+d.v+" €"}</div></div>
+     <div class="tm emo">${d.e}</div>`;
+  d.el=k; d.big=k.querySelector(".big"); d.mini=k.querySelector(".mini"); d.bd=k.querySelector(".bd"); d.mp=k.querySelector(".mp"); d.tm=k.querySelector(".tm"); d.kind=kind;
+  return d;
+}
+const BIG={sub:[600,150], inc:[600,150]};
+
+/* ---- formulario (vive dentro de la tarjeta que se transforma) ---- */
+function makeForm(card,{w,h,title,concept,amount,togLabel,fs=1}){
+  const f=el("div","form",card.el); f.style.width=w+"px"; f.style.height=h+"px"; f.style.transformOrigin="0 0"; f.style.transform=`scale(${fs})`;
+  const fw=w-96;
+  f.innerHTML=`<div class="ttl">${title}</div>
+    <div class="inp" style="left:48px;top:104px;width:${fw*0.62|0}px"><span class="emo" style="font-size:32px">${card.e}</span><span class="v1"></span><span class="caret c1"></span></div>
+    <div class="inp num" style="left:${48+(fw*0.62|0)+20}px;top:104px;width:${fw-(fw*0.62|0)-20}px"><span class="v2"></span><span class="caret c2"></span></div>
+    <div class="tog" style="left:48px;top:214px;width:${fw}px"><span class="emo" style="font-size:34px">🔄</span><div><div class="tl">${togLabel}</div><div class="ts">Se repite cada mes</div></div>
+      <div class="sw" style="right:24px;top:21px"><div class="kn"></div></div></div>
+    <div class="btn" style="left:${48+fw-220}px;top:${h-112}px;width:220px"><span class="b1">Guardar</span><span class="b2">✓ Guardado</span></div>`;
+  const q=s=>f.querySelector(s);
+  card.F={ f, w, h, fs, ttl:q(".ttl"), inps:f.querySelectorAll(".inp"), v1:q(".v1"), v2:q(".v2"), c1:q(".c1"), c2:q(".c2"), tog:q(".tog"), sw:q(".sw"), kn:q(".kn"), btn:q(".btn"), b1:q(".b1"), b2:q(".b2"), concept, amount };
+}
+
+/* orden visual: paneles debajo, tarjetas encima */
+SUBS.forEach(d=>makeCard(d,"sub"));
+INC.forEach(d=>makeCard(d,"inc"));
+const HERR=SUBS[0], CA=INC[0];
+const ZS={musica:2,series:3,gym:4,cloud:5,herr:6}; SUBS.forEach(d=>d.el.style.zIndex=ZS[d.id]); INC.forEach(d=>d.el.style.zIndex=7);
+makeForm(HERR,{w:700,h:440,fs:1.2,title:"Añadir gasto",concept:"Herramientas",amount:"20 €",togLabel:"Gasto recurrente"});
+makeForm(CA,{w:700,h:420,fs:1.2,title:"Añadir ingreso",concept:"Cliente A",amount:"200 €",togLabel:"Ingreso recurrente"});
+
+const CUR = CONFIG.currencies.map(([f,c,n],i)=>{ const d=el("div","cur",world,`<div class="fl emo">${f}</div><div class="cd">${c}</div><div class="cn">${n}</div><div class="ck">✓</div>`); return {el:d,i,ck:d.querySelector(".ck"),code:c}; });
+const chips = INC.map(d=>el("div","chipf num",world,`+${d.v} €`));
+
+const brandEl=el("div"); brandEl.id="brand"; brandEl.innerHTML=[...TX.brand].map(c=>`<span class="m"><span class="l">${c}</span></span>`).join("");
+const brandL=[...brandEl.querySelectorAll(".l")];
+const tagEl=el("div",null,world,`${TX.tagA.trim()}<br><b>${TX.tagB}</b>`); tagEl.id="tagline";
+const urlEl=el("div",null,world,`${TX.url} →`); urlEl.id="url";
+const sub4=el("div",null,curP,TX.sub4); sub4.id="sub4"; sub4.style.left="40px"; sub4.style.top="134px";
+const cursorEl=el("div",null,world,`<svg viewBox="0 0 52 52" width="68" height="68"><path d="M8 5 L8 41 L17.5 32.5 L24 46 L30.5 43 L24 29.5 L37 29.5 Z" fill="#0B1220" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`); cursorEl.id="cursor";
+
+/* ---- titulares ---- */
+function makeCap(lines,size,pos){
+  const d=el("div","cap",caps); d.style.fontSize=size+"px"; d.style.textAlign=pos.align||"center";
+  d.style.left=(pos.x??80)+"px"; d.style.width=(pos.w??840)+"px";
+  const ws=[], lns=[];
+  lines.forEach(words=>{ const ln=el("div","ln",d); lns.push(ln);
+    words.forEach((w,i)=>{ const o=typeof w==="string"?{w}:w; const m=el("span","w",ln); const inner=el("span","wi",m,o.w); if(o.c) inner.style.color=o.c; inner._late=o.late; ws.push(inner); if(i<words.length-1) el("span","sp",ln); }); });
+  return {el:d,ws,lns,size,pos};
+}
+function placeCap(c){ let f=c.size; c.el.style.fontSize=f+"px"; const lim=(c.pos.w??840)-20, wmax=Math.max(...c.lns.map(l=>l.scrollWidth));
+  if(wmax>lim){ f=Math.floor(f*lim/wmax); c.el.style.fontSize=f+"px"; } const h=c.el.offsetHeight; c.el.style.top=(c.pos.cy!=null?c.pos.cy-h/2:c.pos.top)+"px"; }
+const CAPS=[
+  {c:makeCap(TX.s1a,124,{top:228}), tin:0.12, st:[0,.07,.16], din:.42, tout:2.1, sto:.03, dout:.2},
+  {c:makeCap(TX.s1b,124,{top:228}), tin:2.3, st:[0,.06,.1,.17], din:.48, tout:3.86, sto:.025, dout:.2},
+  {c:makeCap(TX.s2,112,{top:206}), tin:3.98, st:[0,2.18,2.26], din:.42, tout:8.8, sto:.025, dout:.2},
+  {c:makeCap(TX.s3a,108,{top:200}), tin:9.0, st:[0,.05,.1,.16,.22], din:.42, tout:12.3, sto:.022, dout:.2},
+  {c:makeCap(TX.s3b,108,{top:200}), tin:12.48, st:[0,.07,.12,.16,.2], din:.45, tout:14.82, sto:.022, dout:.2},
+  {c:makeCap(TX.s4a,112,{top:200}), tin:15.3, st:[0,.06,.1,.18], din:.5, tout:18.42, sto:.025, dout:.22},
+  {c:makeCap(TX.s4b,104,{top:200}), tin:18.62, st:[0,.07,.16,.21,.28], din:.55, tout:20.32, sto:.02, dout:.2, ease:"glide"},
+  {c:makeCap(TX.c1,104,{top:220}), tin:20.86, st:[0,.04,.08], din:.4, tout:22.0, sto:.02, dout:.2},
+  {c:makeCap(TX.c2,104,{top:348}), tin:21.26, st:[0,.04,.08], din:.4, tout:22.03, sto:.02, dout:.2},
+  {c:makeCap(TX.c3,104,{top:476}), tin:21.66, st:[0,.05,.1], din:.45, tout:22.06, sto:.02, dout:.2},
+];
+
+/* ======================= geometría por escena ======================= */
+// Escena 1 · el montón (desorden controlado). t0: llegada; from: dirección; d: duración
+const PILE = {
+  musica:{x:430, y:700, rot:-6, from:[-760,-120], t0:0.34, d:0.62, s0:1.16},  // la primera llega sola y despacio
+  series:{x:600, y:868, rot:5,  from:[760,-40],  t0:1.02, d:0.42, s0:1.08},
+  gym:   {x:600, y:1206,rot:3,  from:[-520,560], t0:1.48, d:0.34, s0:1.1},
+  cloud: {x:440, y:1372,rot:-4, from:[480,620],  t0:1.63, d:0.3,  s0:1.08},
+  herr:  {x:470, y:1036,rot:-2, from:[0,-980],   t0:1.8,  d:0.3,  s0:1.22},   // golpe final, encima de todo
+};
+const LAND = Object.entries(PILE).map(([id,p])=>({id,t:p.t0+p.d})).sort((a,b)=>a.t-b.t);
+const imp=x=> x<0||x>0.55 ? 0 : kf(x,[[0,0],[0.06,1,E.out],[0.26,-0.22,E.inOut],[0.55,0,E.inOut]]);
+// Escena 2 · huecos del panel (fila 2 centrada)
+function slot(i){ return {x:SP.x+44, y:SP.y+330+i*150, w:SP.w-88, h:138}; }   // lista de arriba abajo
+const FILL = {herr:[6.28,0.56], musica:[6.56,0.48], series:[6.8,0.42], gym:[7.0,0.38], cloud:[7.15,0.34]}; // aceleración progresiva
+const GHOST = {musica:[130,1530,-12], series:[960,1470,10], gym:[90,1760,-9], cloud:[1000,1780,8]};
+// Escena 3 · filas del resumen compacto
+const ROW = i=>({x:SUMC.x+60, y:SUMC.y+10, w:SUMC.w-120, h:SUMC.h-20});
+const ISLOT = i=>({x:IP.x+40, y:IP.y+356+i*172, w:IP.w-80, h:152});
+const IFORM = {x:80, y:IP.y+330, w:840, h:504};
+const IARR = {a:11.5, b:[11.62,0.4], c:[11.8,0.4]};
+// Escena 4 · rejilla 2×4 de monedas
+const CSLOT = i=>({x:CP.x+40+(i%2)*390, y:CP.y+272+(i>>1)*206, w:370, h:190});
+const DEPLOY = [0,.05,.09,.16,.2,.27,.31,.36];
+const T_PICK = 18.14;
+// Escena 5 · columnas del cierre y órbita alrededor de la marca
+const CL_SUB = i=>({x:96, y:660+i*86, w:396, h:72});
+const CL_INC = i=>({x:516, y:660+i*86, w:396, h:72});
+const ORBIT = {
+  herr:[250,340,160,-8], musica:[790,262,132,7], series:[585,470,112,-5], gym:[1000,760,124,6], cloud:[74,1000,124,-6],
+  a:[270,1360,146,6], b:[800,1330,128,-7], c:[300,1660,128,5], cur:[740,1640,136,-6],
+};
+const FORM2 = {cx:500, cy:1000, w:840, h:528};
+
+/* ======================= render ======================= */
+function renderCaps(t){
+  for(const k of CAPS){ const {c}=k; let any=false;
+    c.ws.forEach((w,i)=>{ const st=k.st[i]??i*.06; const pin=prog(t,k.tin+st,k.din), pout=prog(t,k.tout+i*k.sto,k.dout);
+      S(w,"transform",`translateY(${((1-(k.ease?E[k.ease]:E.brake)(pin))*112-E.exit(pout)*112).toFixed(2)}%)`); if(pin>0&&pout<1) any=true; });
+    vis(c.el,any?1:0); }
+}
+
+function applyCard(d,P){
+  if(!P||P.o<=0.001){ hide(d.el); return; }
+  rect(d.el,P.cx-P.w/2,P.cy-P.h/2,P.w,P.h);
+  S(d.el,"borderRadius",px(Math.min(P.r??28,P.h/2)));
+  S(d.el,"transform",`rotate(${(P.rot||0).toFixed(3)}deg) scale(${(P.s??1).toFixed(4)})`);
+  vis(d.el,P.o); S(d.el,"filter",(P.blur||0)>0.1?`blur(${P.blur.toFixed(2)}px)`:"none");
+  const base = d.kind==="sub" ? mixC("#FFFFFF","#FFEDE9",P.tint||0) : mixC("#FFFFFF","#E9F8F0",P.tint||0);
+  S(d.el,"background",(P.tile||0)>0 ? mixC(d.kind==="sub"?"#FFEDE9":"#E9F8F0",d.closeTile,P.tile) : base);
+  S(d.el,"borderWidth",px(P.bw??(d.kind==="inc"?3:0)));
+  S(d.el,"borderColor",(P.tile||0)>0.5?"#FFFFFF":(d.kind==="inc"?"#BCEBD5":"#FFFFFF"));
+  S(d.el,"boxShadow",(P.lift||0)>0?`0 ${(16+P.lift*20).toFixed(0)}px ${(36+P.lift*30).toFixed(0)}px rgba(30,30,50,${(.09+P.lift*.06).toFixed(3)}),0 2px 6px rgba(30,30,50,.05)`:"");
+  const [bw,bh]=BIG[d.kind]; const cs=Math.min(P.w/bw,P.h/bh);
+  S(d.big,"width",px(P.w/cs)); S(d.big,"height",px(P.h/cs)); S(d.big,"transform",`scale(${cs.toFixed(4)})`);
+  const bigO=(P.bigO??1)*(1-(P.miniO||0))*(1-(P.tile||0)); vis(d.big,bigO); vis(d.bd,P.badge??1);
+  vis(d.mini,(P.miniO||0)*(1-(P.tile||0))); vis(d.mp,P.price??1);
+  vis(d.tm,P.tile||0); S(d.tm,"fontSize",px(Math.min(P.w,P.h)*0.5));
+}
+
+/* --- suscripciones --- */
+function subPose(d,t){
+  const p=PILE[d.id], i=SUBS.indexOf(d);
+  if(t<p.t0) return null;
+  // escena 1: caída con peso + empujones de las que llegan después
+  const pileAt=tt=>{ let x=p.x,y=p.y,rot=p.rot;
+    for(const L of LAND){ if(L.id===d.id || L.t<=p.t0+p.d) continue; const k=imp(tt-L.t); y+=9*k; rot+=1.1*k*(i%2?1:-1); x+=(p.x-500)*0.03*k; }
+    return {cx:x,cy:y,w:640,h:160,r:30,rot,s:1,o:1,badge:0,lift:0}; };
+  if(t<p.t0+p.d){ const q=prog(t,p.t0,p.d), e=E.drop(q); const P=pileAt(t);
+    P.cx+=p.from[0]*(1-E.brake(q)); P.cy+=p.from[1]*(1-e); P.rot+=(p.from[0]>0?14:-14)*(1-e);
+    P.s=lerp(p.s0,1,e); P.lift=(1-e); P.o=clamp(q*6); return P; }
+  // impacto: aplastamiento breve al llegar
+  const land=p.t0+p.d;
+  if(t<3.95){ const P=pileAt(t); P.s=kf(t,[[land,1],[land+.07,.965,E.out],[land+.3,1,E.settle]]); return P; }
+  const P0=pileAt(3.95);
+  const sl=slot(i), SL={cx:sl.x+sl.w/2, cy:sl.y+sl.h/2, w:sl.w, h:sl.h, r:28, rot:0, s:1, o:1, badge:1, lift:0};
+  const [fT,fD]=FILL[d.id];
+  let P;
+  if(d===HERR){
+    if(t<4.1){ P={...P0}; P.s=lerp(1,.95,E.anticip(prog(t,3.95,.15))); }
+    else if(t<6.06){ const F={cx:FORM2.cx,cy:FORM2.cy,w:FORM2.w,h:FORM2.h,r:40,rot:0,s:1,o:1,badge:0,lift:.6,bigO:0};
+      P=mixPose({...P0,s:.95,lift:.2},F,E.swift(prog(t,4.1,.62))); P.bigO=1-clamp((t-4.1)/.12); }
+    else if(t<fT){ const F={cx:FORM2.cx,cy:FORM2.cy,w:FORM2.w,h:FORM2.h,r:40,rot:0,s:1,o:1,badge:0,lift:.6};
+      P=mixPose(F,{cx:FORM2.cx,cy:FORM2.cy,w:760,h:150,r:30,rot:0,s:1.06,o:1,badge:1,lift:.5},E.swift(prog(t,6.06,.24))); P.bigO=clamp((t-6.16)/.12); P.badge=clamp((t-6.2)/.1); }
+    else { const R={cx:FORM2.cx,cy:FORM2.cy,w:760,h:150,r:30,rot:0,s:1.06,o:1,badge:1,lift:.5}; P=mixPose(R,SL,E.snap(prog(t,fT,fD))); }
+  } else {
+    const g=GHOST[d.id], G={cx:g[0],cy:g[1],w:640,h:160,r:30,rot:g[2],s:.84,o:.28,blur:5,badge:0,lift:0};
+    if(t<fT){ P=mixPose(P0,G,E.snap(prog(t,3.98+i*.03,.55))); }
+    else { const q=prog(t,fT,fD); P=mixPose(G,SL,E.snap(q)); P.o=lerp(.28,1,E.out(clamp(q*2))); P.blur=lerp(5,0,clamp(q*2.5)); P.badge=clamp((q-.6)/.4); P.lift=Math.sin(q*Math.PI)*.6; }
+  }
+  // asentamiento al encajar
+  const land2=fT+fD; if(t>=land2-0.02 && t<land2+0.5){ P.s=(P.s??1)*kf(t,[[land2-.02,1],[land2+.06,1.035,E.out],[land2+.32,1,E.settle]]); }
+  if(t<8.95) return P;
+  // escena 3: de tarjeta a fila del resumen compacto
+  const R=ROW(i), RW={cx:R.x+R.w/2, cy:R.y+R.h/2, w:R.w, h:R.h, r:24, rot:0, s:.92, o:0, badge:0, miniO:1, lift:0};
+  const q3=prog(t,9.0+(4-i)*.045,.62); if(q3>=1&&t<20.55) return null;
+  if(t<20.55){ P=mixPose({...SL},RW,E.swift(q3)); P.miniO=clamp((q3-.2)/.3); P.badge=1-clamp(q3*3); P.o=1-clamp((q3-.55)/.4); return P; }
+  // escena 5: vuelven como filas coral (sin importes: la moneda principal ya es otra)
+  const C5=CL_SUB(i), CB={cx:C5.x+C5.w/2, cy:C5.y+C5.h/2, w:C5.w, h:C5.h, r:18, rot:0, s:1, o:1, badge:0, miniO:1, tint:1, price:0, lift:0};
+  const q5=prog(t,20.72+[0,.05,.1,.13,.18][i],.5);
+  P=mixPose({...CB,cx:CB.cx-620},CB,E.brake(q5)); P.price=0;
+  if(t<22.18) return P;
+  // cierre: cada fila se convierte en un icono alrededor de la marca
+  const o=ORBIT[d.id], env=clamp((t-22.95)/0.8);
+  const TL={cx:o[0]+Math.sin(t*1.2+i)*2.5*env, cy:o[1]+Math.cos(t*1.0+i*1.7)*3*env, w:o[2], h:o[2], r:o[2]*.27, rot:o[3], s:1, o:1, badge:0, miniO:1, tint:1, price:0, tile:1, bw:6, lift:.2};
+  const q6=E.swift(prog(t,22.18+[0,.06,.03,.09,.05][i],.7)); P=mixPose(CB,TL,q6); P.tile=clamp((q6-.08)/.3); P.bw=6*P.tile; P.miniO=1-clamp(q6/.12); P.bigO=0;
+  return P;
+}
+
+function renderForm(d,t,F0,F1,P,toggleT,pressT,ty,c1,c2){
+  const F=d.F; const fo=Math.min(clamp((t-F0)/.22),1-clamp((t-F1)/.1));
+  vis(F.f,fo); if(fo<=0) return;
+  S(F.f,"left",px((P.w-F.w*F.fs)/2)); S(F.f,"top",px((P.h-F.h*F.fs)/2));
+  part(t,F.ttl,F0,{dy:16,d:.4}); F.inps.forEach((e,i)=>part(t,e,F0+.05+i*.05,{dy:22,d:.4}));
+  part(t,F.tog,F0+.14,{dy:22,d:.42}); part(t,F.btn,F0+.18,{dy:22,d:.42});
+  // concepto e importe: escritura rápida
+  const n1=Math.floor(clamp((t-ty)*c1,0,F.concept.length)), n2=Math.floor(clamp((t-ty-F.concept.length/c1-.05)*c2,0,F.amount.length));
+  T(F.v1,F.concept.slice(0,n1)); T(F.v2,F.amount.slice(0,n2));
+  const blink=Math.floor(t*2.6)%2?0:1; vis(F.c1,n1<F.concept.length?1:0); vis(F.c2,n1>=F.concept.length&&t<toggleT-.15?(n2<F.amount.length?1:blink):0);
+  // interruptor "recurrente"
+  const on=kf(t,[[toggleT,0],[toggleT+.26,1,E.settle]]);
+  S(F.kn,"transform",`translateX(${(on*42).toFixed(1)}px)`); S(F.sw,"background",mixC("#D5D2CB","#16B47E",clamp(on)));
+  S(F.tog,"background",mixC("#F4F2ED","#E6F7EF",clamp(on)));
+  // botón guardar
+  S(F.btn,"transform",`scale(${kf(t,[[pressT,1],[pressT+.09,.9,E.out],[pressT+.36,1,E.settle]]).toFixed(4)})`);
+  S(F.btn,"background",mixC("#16B47E","#0F8F63",kf(t,[[pressT,0],[pressT+.08,1],[pressT+.3,0]])));
+  const sw=clamp((t-(pressT+.08))/.1); vis(F.b1,1-sw); vis(F.b2,sw);
+}
+
+function renderSubs(t){
+  for(const d of SUBS){ const P=subPose(d,t); applyCard(d,P); }
+  if(HERR.F) renderForm(HERR,t,4.5,6.04,subPose(HERR,t)||{w:900,h:450},5.42,5.86,4.62,30,16);
+  // panel "Suscripciones activas"
+  if(t<6.0||t>15.45){ hide(subP); }
+  else {
+    const q=prog(t,9.0,.72), e=E.swift(q);
+    const x=lerp(SP.x,SUMC.x,e), y=lerp(SP.y,SUMC.y,e), w=lerp(SP.w,SUMC.w,e), h=lerp(SP.h,SUMC.h,e);
+    const ex=E.exit(prog(t,14.88,.38));
+    rect(subP,x-1000*ex,y,w,h); S(subP,"borderRadius",px(lerp(40,34,e)));
+    // apertura tipo cajón desde el centro
+    const r=E.snap(prog(t,6.0,.5)); const ins=(1-r)*h/2;   // cajón que se abre de arriba abajo desde el centro
+    S(subP,"clipPath",r<1?`inset(${ins.toFixed(1)}px 0 ${ins.toFixed(1)}px 0 round 40px)`:"none");
+    vis(subP,1);
+    vis(SPb.box,1-clamp(q*3)); vis(SPb.mini,clamp((q-.45)/.3));
+    // contador ligado a las tarjetas que encajan
+    let n=0,sum=0; SUBS.forEach(d=>{ const [fT,fD]=FILL[d.id]; if(t>=fT+fD-.02){ n++; sum+=d.v; } });
+    T(SPb.sub, n===1?"1 suscripción":`${n} suscripciones`); T(SPb.tot, `${sum} €`);
+    const lastLand=Math.max(...SUBS.map(d=>{ const [a,b]=FILL[d.id]; return t>=a+b-.02?a+b:0; }));
+    const pop=kf(t,[[lastLand,1],[lastLand+.07,1.08,E.out],[lastLand+.3,1,E.settle]]);
+    S(SPb.tot.parentElement,"transform",`scale(${pop.toFixed(4)})`); S(SPb.tot.parentElement,"transformOrigin","0% 60%");
+    const firstLand=FILL.herr[0]+FILL.herr[1]-.02; vis(SPb.sub, clamp((t-firstLand)/.15)); vis(SPb.tot.parentElement, clamp((t-firstLand)/.15));
+  }
+}
+
+/* --- ingresos --- */
+function incPose(d,t){
+  const i=INC.indexOf(d), sl=ISLOT(i), SL={cx:sl.x+sl.w/2, cy:sl.y+sl.h/2, w:sl.w, h:sl.h, r:28, rot:0, s:1, o:1, badge:1, lift:0};
+  let P=null;
+  if(d===CA){
+    if(t<10.0) return null;
+    const FM={cx:IFORM.x+IFORM.w/2, cy:IFORM.y+IFORM.h/2, w:IFORM.w, h:IFORM.h, r:40, rot:0, s:1, o:1, badge:0, lift:.6, bigO:0};
+    if(t<11.08){ const q=prog(t,10.0,.4); P=mixPose({...SL,s:.6,o:0,lift:.6,badge:0},FM,E.snap(q)); P.o=clamp(q*4); P.bigO=0; }
+    else { const q=prog(t,11.08,.42); P=mixPose(FM,SL,E.swift(q)); P.bigO=clamp((q-.4)/.3); P.badge=clamp((q-.6)/.4); }
+  } else {
+    const [t0,dd]=IARR[d.id]; if(t<t0) return null;
+    const q=prog(t,t0,dd); P=mixPose(d.id==="b"?{...SL,cx:SL.cx+760,rot:8,lift:.8}:{...SL,cx:SL.cx+360,cy:SL.cy+520,rot:-7,lift:.8},SL,E.brake(q)); P.o=clamp(q*5);
+  }
+  const land = d===CA ? 11.5 : IARR[d.id][0]+IARR[d.id][1];
+  if(t>=land-.02 && t<land+.5) P.s*=kf(t,[[land-.02,1],[land+.06,1.04,E.out],[land+.32,1,E.settle]]);
+  if(t<14.92) return P;
+  // escena 4: Cliente A se convierte en la tarjeta EUR; las otras se hunden en el panel
+  if(d===CA){ const c=CSLOT(0), CC={cx:c.x+c.w/2, cy:c.y+c.h/2, w:c.w, h:c.h, r:26, rot:0, s:1, o:1, badge:0, lift:0};
+    const q=prog(t,14.95,.72); if(q>=1&&t<20.55) return null;
+    if(t<20.55){ P=mixPose(P,CC,E.swift(q)); P.bigO=1-clamp(q*2.5); P.badge=1-clamp(q*3); P.tint=clamp((q-.3)/.5); return P; } }
+  else if(t<20.55){ const q=E.exit(prog(t,14.92+i*.04,.36)); P.cy+=70*q; P.s*=lerp(1,.9,q); P.o=1-q; return P.o>0?P:null; }
+  // escena 5: filas verdes a la derecha (sin importes)
+  const C5=CL_INC(i), CB={cx:C5.x+C5.w/2, cy:C5.y+C5.h/2, w:C5.w, h:C5.h, r:18, rot:0, s:1, o:1, badge:0, miniO:1, tint:1, price:0, lift:0, bigO:1};
+  const q5=prog(t,20.98+[0,.06,.11][i],.5); P=mixPose({...CB,cx:CB.cx+620},CB,E.brake(q5)); P.price=0;
+  if(t<22.2) return P;
+  const o=ORBIT[d.id], env=clamp((t-22.95)/0.8);
+  const TL={cx:o[0]+Math.sin(t*1.1+i*2)*2.5*env, cy:o[1]+Math.cos(t*1.3+i)*3*env, w:o[2], h:o[2], r:o[2]*.27, rot:o[3], s:1, o:1, badge:0, miniO:1, tint:1, price:0, tile:1, bw:6, lift:.2};
+  const q6=E.swift(prog(t,22.2+[0,.07,.04][i],.68)); P=mixPose(CB,TL,q6); P.tile=clamp((q6-.08)/.3); P.bw=6*P.tile; P.price=0; P.miniO=1-clamp(q6/.12); P.bigO=0;
+  return P;
+}
+function renderInc(t){
+  for(const d of INC){ const P=incPose(d,t); applyCard(d,P); }
+  const fp=incPose(CA,t); if(fp) renderForm(CA,t,10.22,11.1,fp,10.82,11.02,10.3,40,30); else hide(CA.F.f);
+  // panel: se revela con una máscara que barre desde el resumen (como si la cámara girara)
+  if(t<9.42||t>15.75){ hide(incP); }
+  else {
+    const r=E.snap(prog(t,9.42,.7)); const e=E.swift(prog(t,14.95,.72));
+    const x=lerp(IP.x,CP.x,e), y=lerp(IP.y,CP.y,e), w=lerp(IP.w,CP.w,e), h=lerp(IP.h,CP.h,e);
+    rect(incP,x,y,w,h); vis(incP,1-clamp((t-15.5)/.2));
+    S(incP,"clipPath",r<1?`inset(0 0 ${((1-r)*h).toFixed(1)}px 0 round 40px)`:"none");
+    S(incP,"background",mixC("#F3FBF7","#FFFFFF",e)); S(incP,"borderColor",mixC("#BCEBD5","#FFFFFF",e));
+    vis(IPb.head,1-clamp((t-14.95)/.18));
+    // total construido con aportaciones visibles (cada chip suma al llegar)
+    let n=0,sum=0,last=0; INC.forEach((d,i)=>{ const ta=CHIP_T[i]+.36; if(t>=ta){ n++; sum+=d.v; last=ta; } });
+    T(IPb.sub, n? `${n} ${n===1?"ingreso":"ingresos"} fijos apuntados por ti` : "Apunta tus ingresos fijos");
+    T(IPb.tot, `${fmt(sum)} €`);
+    const pop=kf(t,[[last,1],[last+.07,1.08,E.out],[last+.3,1,E.settle]]); S(IPb.totBox,"transformOrigin","0% 60%"); S(IPb.totBox,"transform",`scale(${pop.toFixed(4)})`);
+  }
+  // chips "+X €" viajan de cada tarjeta al total
+  INC.forEach((d,i)=>{ const c=chips[i]; const t0=CHIP_T[i]; if(t<t0||t>t0+.56){ hide(c); return; }
+    const q=prog(t,t0,.36), sl=ISLOT(i); const ax=sl.x+sl.w-200, ay=sl.y+20, bx=IP.x+70, by=IP.y+214;
+    const e=E.swift(q); const x=lerp(ax,bx,e), y=lerp(ay,by,e)-Math.sin(q*Math.PI)*60;
+    rect(c,x,y,c.offsetWidth||160,60); S(c,"width","auto"); S(c,"transform",`scale(${(q<1?lerp(1,.7,E.exit(q)):0.7).toFixed(3)})`); vis(c,q<1?clamp(q*6):1-clamp((t-t0-.36)/.15)); });
+}
+const CHIP_T=[11.52, 12.04, 12.22];
+
+/* --- monedas --- */
+function renderCur(t){
+  if(t<15.62||t>21.2){ hide(curP); CUR.forEach(c=>hide(c.el)); return; }
+  // panel: hereda la forma del panel de ingresos
+  const pr=E.snap(prog(t,15.62,.3)), ex=E.exit(prog(t,20.38,.3));
+  const ms=CSLOT(CONFIG.pick);
+  rect(curP,lerp(CP.x,ms.x-14,ex),lerp(CP.y,ms.y-14,ex),lerp(CP.w,ms.w+28,ex),lerp(CP.h,ms.h+28,ex)); vis(curP,(t<15.75?1:1)*(1-clamp((ex-.6)/.4)));
+  curHead.forEach((e,i)=>part(t,e,15.66+i*.05,{dx:-20,d:.4,keep:1-clamp(ex*2)}));
+  const selP=kf(t,[[T_PICK,0],[T_PICK+.22,1,E.out]]);
+  CUR.forEach((c,i)=>{
+    const s=CSLOT(i); let x=s.x,y=s.y,sc=1,o=1;
+    if(i>0){ const q=prog(t,15.74+DEPLOY[i],.44); const e=E.snap(q), s0=CSLOT(0);
+      x=lerp(s0.x,s.x,e); y=lerp(s0.y,s.y,e); sc=kf(q,[[0,.8],[.7,1.03,E.out],[1,1,E.inOut]]); o=clamp(q*5); }
+    else if(t<15.67){ hide(c.el); return; }
+    if(i===CONFIG.pick && t>=20.68){ hide(c.el); return; }
+    const co = i===0 ? E.out(prog(t,15.67,.22)) : 1; [...c.el.children].forEach(ch=>{ if(ch!==c.ck) vis(ch,co); });
+    // al cerrar: todas se pliegan hacia MXN
+    if(i!==CONFIG.pick && ex>0){ x=lerp(x,ms.x,ex); y=lerp(y,ms.y,ex); o*=1-ex; sc*=lerp(1,.85,ex); }
+    // MXN: hover, pulsación y asentamiento
+    if(i===CONFIG.pick){ sc*=kf(t,[[17.88,1],[18.02,1.025,E.out],[T_PICK-.02,1.025],[T_PICK+.07,.965,E.out],[T_PICK+.42,1,E.settle]]); }
+    rect(c.el,x,y,s.w,s.h); S(c.el,"transform",`scale(${sc.toFixed(4)})`); vis(c.el,o);
+    // estado seleccionado (EUR al principio, MXN después)
+    const sel = i===0 ? 1-selP : i===CONFIG.pick ? selP : 0;
+    S(c.el,"background",mixC("#FFFFFF","#ECFBF4",sel)); S(c.el,"borderColor",mixC("#ECE9E2","#34C38F",sel)); S(c.el,"borderWidth",px(2+sel));
+    S(c.el,"boxShadow",sel>0.05?`0 0 0 ${(sel*6).toFixed(1)}px rgba(22,180,126,.14), 0 14px 30px rgba(22,180,126,${(sel*.14).toFixed(3)})`:"0 6px 16px rgba(30,30,50,.05)");
+    const ck = i===CONFIG.pick ? kf(t,[[T_PICK+.06,0],[T_PICK+.3,1,E.settle]]) : 0;
+    S(c.ck,"transform",`scale(${ck.toFixed(3)})`); vis(c.ck,ck>0.01?1:0);
+  });
+}
+function renderSub4(t){ part(t,sub4,15.95,{dy:18,d:.5,keep:1-clamp(E.exit(prog(t,20.36,.18)))}); if(t<15.95) hide(sub4); }
+
+/* --- MXN en el cierre --- */
+const mxChip = el("div","cur",world,`<div class="fl emo">🇲🇽</div><div class="cd">MXN</div><div class="cn">Pesos mexicanos</div>`);
+const mxTile = el("div","k",world,`<div class="tm emo" style="position:absolute;inset:0;display:grid;place-items:center">🇲🇽</div>`);
+function renderClosingCur(t){
+  // MXN se separa del selector y baja bajo "Todo más claro."
+  if(t<20.68||t>22.3){ hide(mxChip); } else {
+    const ms=CSLOT(CONFIG.pick), q=E.swift(prog(t,20.68,.5));
+    const tgt={x:500-185,y:1140,w:370,h:190};
+    rect(mxChip,lerp(ms.x,tgt.x,q),lerp(ms.y,tgt.y,q),370,190); vis(mxChip,1-clamp((t-22.24)/.06));
+    S(mxChip,"background","#ECFBF4"); S(mxChip,"borderColor","#34C38F"); S(mxChip,"borderWidth","3px");
+    S(mxChip,"boxShadow","0 0 0 6px rgba(22,180,126,.14), 0 14px 30px rgba(22,180,126,.14)");
+    S(mxChip,"transform",`scale(${kf(t,[[21.62,1],[21.72,1.05,E.out],[21.98,1,E.settle]]).toFixed(4)})`);
+  }
+  if(t<22.24){ hide(mxTile); return; }
+  const o=ORBIT.cur, q=E.swift(prog(t,22.24,.66)), env=clamp((t-22.95)/0.8);
+  const a={cx:500,cy:1235,w:370,h:190}, b={cx:o[0]+Math.sin(t*1.15+4)*2.5*env, cy:o[1]+Math.cos(t*.95+2)*3*env, w:o[2], h:o[2]};
+  const cx=lerp(a.cx,b.cx,q), cy=lerp(a.cy,b.cy,q), w=lerp(a.w,b.w,q), h=lerp(a.h,b.h,q);
+  rect(mxTile,cx-w/2,cy-h/2,w,h); S(mxTile,"borderRadius",px(lerp(26,o[2]*.27,q))); S(mxTile,"background","#ECFBF4");
+  S(mxTile,"borderColor",mixC("#34C38F","#FFFFFF",clamp(q*1.5)));
+  S(mxTile,"borderWidth",px(lerp(3,6,q))); S(mxTile,"transform",`rotate(${(o[3]*q).toFixed(2)}deg)`); S(mxTile,"fontSize",px(Math.min(w,h)*.5)); vis(mxTile,1);
+}
+
+// punto de un formulario en coordenadas de escena (interruptor o botón), según su tamaño y escala
+function FP(card,cx,cy,what){ const F=card.F, fw=F.w-96; const p= what==="sw" ? [48+fw-24-48, 214+21+27] : [48+fw-110, F.h-112+38];
+  return [cx-F.w*F.fs/2+p[0]*F.fs, cy-F.h*F.fs/2+p[1]*F.fs]; }
+function renderCursor(t){
+  // tres gestos: activar "recurrente" y guardar (gasto) · lo mismo para un ingreso · elegir MXN
+  const paths=[
+    {t0:4.98,t1:6.1,  pts:[[1010,1820,4.98],[...FP(HERR,FORM2.cx,FORM2.cy,"sw"),5.36],[...FP(HERR,FORM2.cx,FORM2.cy,"sw"),5.5],[...FP(HERR,FORM2.cx,FORM2.cy,"btn"),5.8]], clicks:[5.4,5.84]},
+    {t0:10.45,t1:11.2, pts:[[1010,1840,10.45],[...FP(CA,IFORM.x+IFORM.w/2,IFORM.y+IFORM.h/2,"sw"),10.8],[...FP(CA,IFORM.x+IFORM.w/2,IFORM.y+IFORM.h/2,"sw"),10.86],[...FP(CA,IFORM.x+IFORM.w/2,IFORM.y+IFORM.h/2,"btn"),11.0]], clicks:[10.8,11.0]},
+    {t0:17.3,t1:18.7, pts:[[180,1820,17.3],[CSLOT(2).x+CSLOT(2).w/2,CSLOT(2).y+CSLOT(2).h/2+10,17.9],[CSLOT(2).x+CSLOT(2).w/2,CSLOT(2).y+CSLOT(2).h/2+10,18.6]], clicks:[T_PICK]},
+  ];
+  const pth=paths.find(p=>t>=p.t0&&t<=p.t1); if(!pth){ hide(cursorEl); return; }
+  let x=pth.pts[0][0], y=pth.pts[0][1];
+  for(let i=1;i<pth.pts.length;i++){ const [x0,y0,a]=pth.pts[i-1], [x1,y1,b]=pth.pts[i];
+    if(t>=a){ const q=(i===1&&pth===paths[2]?E.glide:E.swift)(prog(t,a,b-a)); x=lerp(x0,x1,q); y=lerp(y0,y1,q)-Math.sin(q*Math.PI)*(i===1?50:30); } }
+  let s=1; pth.clicks.forEach(c=>{ s*=kf(t,[[c-.04,1],[c+.03,.82,E.out],[c+.16,1,E.out]]); });
+  rect(cursorEl,x-10,y-7,68,68); S(cursorEl,"transform",`scale(${s.toFixed(3)})`);
+  vis(cursorEl,Math.min(clamp((t-pth.t0)/.12),1-clamp((t-(pth.t1-.15))/.15)));
+}
+
+function renderClosing(t){
+  if(t<22.3){ hide(brandEl); hide(tagEl); hide(urlEl); return; }
+  vis(brandEl,1);
+  brandL.forEach((l,i)=>{ const p=E.brake(prog(t,22.3+[0,.05,.08,.13,.17][i],.52)); S(l,"transform",`translateY(${((1-p)*105).toFixed(2)}%)`); });
+  part(t,tagEl,22.5,{dy:22,d:.42});
+  const pu=prog(t,22.56,.4); S(urlEl,"transform",`translateX(-50%) scale(${kf(pu,[[0,.85],[.6,1.04,E.out],[1,1,E.inOut]]).toFixed(4)})`); vis(urlEl,clamp(pu*3));
+}
+
+function renderCamera(t){
+  // respiración mínima en las pausas de lectura; nada flota constantemente
+  const s=kf(t,[[12.5,1],[14.8,1.015,E.inOut],[15.3,1,E.inOut]]);
+  S(world,"transform",`scale(${s.toFixed(5)})`);
+}
+
+function render(t){
+  t=clamp(t,0,CONFIG.duration);
+  renderCamera(t); renderCaps(t); renderSubs(t); renderInc(t); renderCur(t); renderSub4(t);
+  renderClosingCur(t); renderCursor(t); renderClosing(t);
+}
+
+/* ======================= reproducción ======================= */
+const player={t:0,playing:false,last:0};
+const scrub=$("#scrub"), timeEl=$("#time"), bPlay=$("#bPlay");
+function setT(t){ player.t=clamp(t,0,CONFIG.duration); render(player.t); scrub.value=player.t; timeEl.textContent=`${player.t.toFixed(2).padStart(5,"0")} / ${CONFIG.duration.toFixed(2)} s`; }
+function play(){ if(player.t>=CONFIG.duration) player.t=0; player.playing=true; player.last=performance.now(); bPlay.textContent="❚❚ Pausa"; requestAnimationFrame(loop); }
+function pause(){ player.playing=false; bPlay.textContent="▶ Reproducir"; }
+function loop(now){ if(!player.playing) return; const dt=(now-player.last)/1000; player.last=now; setT(player.t+Math.min(dt,.1)); if(player.t>=CONFIG.duration){ pause(); return; } requestAnimationFrame(loop); }
+bPlay.onclick=()=>player.playing?pause():play();
+$("#bRestart").onclick=()=>{ setT(0); play(); };
+scrub.oninput=()=>{ pause(); setT(+scrub.value); };
+function toggleRec(){ $("#app").classList.toggle("rec"); fit(); const h=$("#hint"); if($("#app").classList.contains("rec")){ h.style.opacity=1; setTimeout(()=>h.style.opacity=0,1800);} }
+const toggleSafe=()=>$("#app").classList.toggle("safe");
+$("#bHide").onclick=toggleRec; $("#bSafe").onclick=toggleSafe;
+addEventListener("keydown",e=>{ if(e.target.tagName==="INPUT"&&e.key!==" ") return;
+  if(e.key===" "){ e.preventDefault(); player.playing?pause():play(); }
+  else if(e.key==="r"||e.key==="R"){ setT(0); play(); }
+  else if(e.key==="h"||e.key==="H") toggleRec();
+  else if(e.key==="s"||e.key==="S") toggleSafe();
+  else if(e.key==="ArrowRight"){ pause(); setT(player.t+(e.shiftKey?1:1/60)); }
+  else if(e.key==="ArrowLeft"){ pause(); setT(player.t-(e.shiftKey?1:1/60)); } });
+const marks=$("#marks"); CONFIG.scenes.forEach(([n,s])=>{ const m=el("span",null,marks,n); m.style.left=(s/CONFIG.duration*100)+"%"; m.onclick=()=>{ pause(); setT(s); }; });
+function fit(){ const vp=$("#viewport"), W=vp.clientWidth, H=vp.clientHeight, k=Math.min(W/1080,H/1920);
+  $("#stage").style.transform=`translate(${((W-1080*k)/2).toFixed(2)}px,${((H-1920*k)/2).toFixed(2)}px) scale(${k})`; }
+addEventListener("resize",fit);
+async function boot(){
+  fit();
+  try{ await Promise.all(["400 20px RInter","500 20px RInter","600 20px RInter","700 20px RInter","800 20px RDisplay","900 20px RDisplay"].map(f=>document.fonts.load(f,"Rumbo €áéíóú"))); await document.fonts.ready; }catch(e){}
+  CAPS.forEach(k=>placeCap(k.c));
+  $("#loading").remove();
+  const q=new URLSearchParams(location.search);
+  if(q.get("controls")==="0") $("#app").classList.add("rec"), fit();
+  if(q.get("safe")==="1") $("#app").classList.add("safe");
+  setT(parseFloat(q.get("t"))||0); window.__ready=true;
+  if(q.get("autoplay")!=="0") play();
+}
+window.rumbo={ seek:t=>{pause();setT(t);}, play, pause, duration:CONFIG.duration, render };
+boot();
+</script>
+</body>
+</html>

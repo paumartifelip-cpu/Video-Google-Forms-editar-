@@ -10,6 +10,10 @@
 | `tools/safecheck.mjs` | Comprueba que titulares, datos, marca y CTA de la vertical quedan dentro de la zona segura. |
 | `rumbo-suscripciones.html` | **Nuevo vídeo:** suscripciones, ingresos recurrentes y moneda principal (16:9, 25 s). Controles iguales + **S** para ver la zona segura. |
 | `rumbo-suscripciones-4k.mp4` | Render real 4K: H.264, 3840×2160, 60 fps, 1500 fotogramas, 25,0 s. |
+| `rumbo-suscripciones-vertical.html` | **Vídeo 2 en vertical 9:16** (lienzo 1080×1920), recompuesto para móvil. Controles iguales + **S** para la zona segura. |
+| `rumbo-suscripciones-vertical.mp4` | Render real vertical: H.264, 1080×1920, 60 fps, 1500 fotogramas, 25,0 s. |
+| `src/rumbo-suscripciones-vertical.template.html` | Fuente de la vertical (generada con `tools/make_vertical_subs.py` a partir de la horizontal + geometría propia). |
+| `tools/safecheck-suscripciones-vertical.mjs` | Comprueba que el lienzo es vertical y la zona segura (x 80–920, y 180–1600). |
 | `src/rumbo-suscripciones.template.html` | Fuente editable del nuevo vídeo (`CONFIG`: textos, datos, monedas y tiempos). |
 | `tools/safecheck-suscripciones.mjs` | Comprueba la zona segura del nuevo vídeo (x 160–1760, y 100–880). |
 | `src/rumbo.template.html` | Fuente editable (textos, colores, datos y tiempos en `CONFIG` al principio del `<script>`). |
@@ -30,6 +34,9 @@ VERTICAL=1 node tools/render.mjs 60 rumbo-motion-vertical.mp4     # vertical
 node tools/safecheck.mjs                                          # zonas de seguridad (vertical)
 FILE=rumbo-suscripciones.html DPR=2 node tools/render.mjs 60 rumbo-suscripciones-4k.mp4   # nuevo vídeo en 4K
 node tools/safecheck-suscripciones.mjs                            # zona segura (nuevo vídeo)
+python3 tools/make_vertical_subs.py && python3 tools/build.py    # regenera la vertical del vídeo 2
+FILE=rumbo-suscripciones-vertical.html VW=1080 VH=1920 node tools/render.mjs 60 rumbo-suscripciones-vertical.mp4
+node tools/safecheck-suscripciones-vertical.mjs                   # lienzo 9:16 + zona segura
 VERTICAL=1 VW=360 VH=640 node tools/snap.mjs /tmp/movil 12.4      # vista a tamaño de móvil
 ```
 
