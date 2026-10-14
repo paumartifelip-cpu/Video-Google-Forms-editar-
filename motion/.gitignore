@@ -1,0 +1,4 @@
+build/layers/
+build/stills/
+build/render.log
+__pycache__/
