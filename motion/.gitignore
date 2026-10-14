@@ -1,4 +1,3 @@
-build/layers/
-build/stills/
-build/render.log
+build/*
+!build/motion.mp4
 __pycache__/
