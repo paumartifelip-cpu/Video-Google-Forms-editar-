@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>FrutiControl · Tu frutería, bajo control</title>
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Figtree"; font-weight: 500; src: url("assets/fonts/figtree-500.woff2") format("woff2"); }
+      @font-face { font-family: "Figtree"; font-weight: 600; src: url("assets/fonts/figtree-600.woff2") format("woff2"); }
+      @font-face { font-family: "Figtree"; font-weight: 700; src: url("assets/fonts/figtree-700.woff2") format("woff2"); }
+      @font-face { font-family: "Figtree"; font-weight: 800; src: url("assets/fonts/figtree-800.woff2") format("woff2"); }
+      @font-face { font-family: "Figtree"; font-weight: 900; src: url("assets/fonts/figtree-900.woff2") format("woff2"); }
+
+      /* ── Paleta extraída de las capturas de FrutiControl ── */
+      :root {
+        --mint-top: #b1e1c3;      /* menú lateral (arriba) */
+        --mint-bot: #97d6af;      /* menú lateral (abajo) */
+        --page: #f2f8f4;          /* fondo de página */
+        --card: #ffffff;
+        --line: #e3ebe6;          /* borde de tarjetas */
+        --ink: #12291d;           /* titulares verde casi negro */
+        --muted: #66736c;         /* textos secundarios */
+        --g-strong: #2c9a5e;      /* botones / acciones positivas */
+        --g-num: #1c7348;         /* cifras de ingresos */
+        --g-label: #1e7644;       /* rótulos de sección */
+        --g-surf: #f0faf5;        /* superficie verde clara */
+        --g-bar: #92d4ab;         /* barra lateral de tarjeta verde */
+        --ben-a: #8ad1a5;         /* tarjeta de beneficio */
+        --ben-b: #5ec088;
+        --ben-ink: #05371b;
+        --r-strong: #c03a2a;      /* gastos y pérdidas */
+        --r-num: #bc3624;
+        --r-surf: #fbeae7;
+        --nav-ink: #286144;
+        --nav-icon: #21734c;
+        --fruit-orange: #ff9a1f;
+        --fruit-yellow: #f7c928;
+        --fruit-red: #e8322a;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--page); }
+      body { font-family: "Figtree", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--page); }
+      #film { position: absolute; inset: 0; }
+
+      .abs { position: absolute; }
+      .anc { position: absolute; width: 0; height: 0; }
+      .mbox { position: absolute; left: 0; top: 0; overflow: hidden; }
+      svg.fr { display: block; width: 100%; height: 100%; overflow: visible; }
+
+      /* fondos */
+      #bgDeep { position: absolute; inset: 0; opacity: 0;
+        background: radial-gradient(ellipse at 50% 40%, #e3f5ea 0%, #c4e9d3 55%, #a9dfc0 100%); }
+      #closeGlow { position: absolute; inset: 0; opacity: 0;
+        background: radial-gradient(circle at 50% 36%, #ffffff 0%, #eaf7ef 38%, #d6f0e0 100%); }
+
+      /* app (todo lo que la cámara aleja en la escena de producto) */
+      #app { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--page); }
+      #appInner { position: absolute; inset: 0; }
+
+      /* ── menú lateral ── */
+      #sidebar { position: absolute; left: 0; top: 0; width: 150px; height: 1080px;
+        background: linear-gradient(180deg, var(--mint-top), var(--mint-bot)); }
+      #sbLogo { position: absolute; left: 39px; top: 34px; width: 72px; height: 106px; }
+      #sbLogo img { width: 100%; height: 100%; display: block; }
+      #sbDiv { position: absolute; left: 0; top: 182px; width: 150px; height: 2px; background: rgba(20, 90, 50, 0.08); }
+      #navHi { position: absolute; left: 8px; top: 212px; width: 134px; height: 108px; background: #fff;
+        border-radius: 4px; box-shadow: 0 8px 18px -10px rgba(10, 60, 30, 0.35); }
+      .nav { position: absolute; left: 8px; width: 134px; height: 108px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 12px; color: var(--nav-ink);
+        font-size: 17px; font-weight: 700; letter-spacing: 0.06em; }
+      .nav svg { width: 36px; height: 36px; stroke: var(--nav-icon); fill: none; stroke-width: 1.7;
+        stroke-linecap: round; stroke-linejoin: round; }
+
+      /* cabecera de la app */
+      #appHeader { position: absolute; left: 150px; top: 0; width: 1770px; height: 124px; background: #fff;
+        border-bottom: 1px solid var(--line); opacity: 0; }
+      #appHeader .k { position: absolute; left: 40px; top: 26px; font-size: 21px; letter-spacing: 0.14em; color: var(--muted); font-weight: 500; }
+      #appHeader .t { position: absolute; left: 40px; top: 50px; font-size: 48px; font-weight: 800; color: var(--ink); }
+
+      /* ── componentes de la interfaz ── */
+      .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+        box-shadow: 0 24px 50px -30px rgba(20, 70, 40, 0.28); }
+      .tile { position: absolute; padding: 22px 28px; border-radius: 2px; }
+      .tile.g { background: var(--g-surf); border-left: 6px solid var(--g-bar); }
+      .tile.r { background: var(--r-surf); border-left: 6px solid var(--r-strong); }
+      .tlabel { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 500;
+        letter-spacing: 0.09em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+      .tnum { font-size: 46px; font-weight: 800; margin-top: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .g .tnum { color: var(--g-num); }
+      .r .tnum { color: var(--r-num); }
+      .ai { width: 24px; height: 24px; flex: none; }
+      .btn { position: absolute; display: flex; align-items: center; justify-content: center; gap: 14px; color: #fff;
+        font-weight: 800; font-size: 31px; border-radius: 2px; }
+      .btn.g { background: var(--g-strong); }
+      .btn.r { background: var(--r-strong); }
+      .sect { position: absolute; font-size: 22px; font-weight: 800; letter-spacing: 0.12em; color: var(--g-label); text-transform: uppercase; }
+      .foot { position: absolute; font-size: 21px; color: var(--muted); line-height: 1.35; }
+      .num { font-variant-numeric: tabular-nums; }
+
+      /* titulares por escena */
+      .hl { position: absolute; left: 230px; top: 318px; width: 620px; }
+      .hl .kick { display: flex; align-items: center; gap: 14px; font-size: 23px; font-weight: 700; letter-spacing: 0.16em;
+        color: var(--g-label); text-transform: uppercase; opacity: 0; }
+      .hl .kick i { display: block; width: 34px; height: 6px; border-radius: 3px; background: var(--g-strong); }
+      .hl.red .kick { color: var(--r-strong); }
+      .hl.red .kick i { background: var(--r-strong); }
+      .hl h2 { margin-top: 22px; font-size: 86px; white-space: nowrap; font-weight: 800; line-height: 1.02; letter-spacing: -0.02em; color: var(--ink); }
+      .ln { display: block; overflow: hidden; padding-bottom: 8px; margin-bottom: -8px; }
+      .ln > span { display: block; }
+      .hl .sub { margin-top: 30px; font-size: 31px; font-weight: 500; line-height: 1.35; color: #3f5148; opacity: 0; max-width: 560px; }
+
+      /* escena 1 */
+      #q { position: absolute; left: 160px; top: 372px; width: 1600px; text-align: center; font-size: 122px; font-weight: 900;
+        line-height: 1.04; letter-spacing: -0.03em; color: var(--ink); }
+      #q .hi { color: var(--g-strong); }
+      .ticket { position: absolute; background: #fff; border-radius: 8px; border: 1px solid var(--line);
+        box-shadow: 0 22px 40px -22px rgba(20, 60, 40, 0.35); display: flex; align-items: center; gap: 18px; padding: 0 26px;
+        font-size: 26px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+      .ticket b { font-weight: 800; font-size: 30px; margin-left: auto; }
+      .ticket.g { border-left: 8px solid var(--g-bar); }
+      .ticket.g b { color: var(--g-num); }
+      .ticket.r { border-left: 8px solid var(--r-strong); }
+      .ticket.r b { color: var(--r-num); }
+      .ticket svg { width: 46px; height: 46px; flex: none; }
+
+      /* tarjetas que se transforman */
+      .morph { background: #fff; border: 1px solid var(--line); box-shadow: 0 22px 40px -22px rgba(20, 60, 40, 0.35); }
+      .mc { position: absolute; left: 0; top: 0; width: 540px; height: 110px; display: flex; align-items: center; gap: 18px;
+        padding: 0 28px; white-space: nowrap; opacity: 0; }
+      .mc .lab { font-size: 27px; font-weight: 700; color: var(--ink); }
+      .mc .lab small { display: block; font-size: 20px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; }
+      .mc b { margin-left: auto; font-size: 36px; font-weight: 800; }
+      .mc svg { width: 58px; height: 58px; flex: none; }
+      .barL { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
+
+      /* beneficio */
+      #benef { position: absolute; left: 932px; top: 438px; width: 816px; height: 150px; border-radius: 4px; overflow: hidden;
+        background: linear-gradient(90deg, var(--ben-a), var(--ben-b)); box-shadow: 0 26px 40px -26px rgba(20, 110, 60, 0.6); opacity: 0; }
+      #benef .full { position: absolute; left: 30px; top: 24px; }
+      #benef .full .l { font-size: 22px; font-weight: 500; letter-spacing: 0.1em; color: var(--ben-ink); }
+      #benef .full .n { font-size: 78px; font-weight: 900; color: var(--ben-ink); margin-top: 2px; font-variant-numeric: tabular-nums; }
+      #benef .compact { position: absolute; left: 0; top: 0; width: 880px; height: 88px; display: flex; align-items: center;
+        gap: 22px; padding: 0 30px; opacity: 0; white-space: nowrap; }
+      #benef .compact .l { font-size: 21px; font-weight: 700; letter-spacing: 0.1em; color: var(--ben-ink); }
+      #benef .compact .n { font-size: 42px; font-weight: 900; color: var(--ben-ink); font-variant-numeric: tabular-nums; }
+      #benef .compact .tag { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700;
+        color: var(--ben-ink); background: rgba(255, 255, 255, 0.55); border-radius: 30px; padding: 9px 18px; }
+      #benef .compact .tag svg { width: 22px; height: 22px; }
+
+      /* inventario */
+      .inv { position: absolute; top: 290px; width: 280px; height: 440px; }
+      .inv .ic { position: absolute; left: 75px; top: 28px; width: 130px; height: 130px; }
+      .inv .nm { position: absolute; left: 28px; top: 184px; font-size: 34px; font-weight: 800; color: var(--ink); }
+      .inv .kg { position: absolute; left: 28px; top: 226px; font-size: 76px; font-weight: 900; color: var(--g-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .inv .kg small { font-size: 38px; font-weight: 800; }
+      .inv .trk { position: absolute; left: 28px; top: 334px; width: 224px; height: 12px; border-radius: 6px; background: #e4eee8; overflow: hidden; }
+      .inv .fill { width: 100%; height: 100%; border-radius: 6px; background: var(--g-strong); }
+      .inv .chip { position: absolute; left: 28px; top: 368px; height: 44px; padding: 0 16px; border-radius: 22px; display: flex;
+        align-items: center; gap: 8px; font-size: 20px; font-weight: 800; white-space: nowrap; }
+      .chip.ok { background: var(--g-surf); color: var(--g-num); }
+      .chip.low { background: var(--r-surf); color: var(--r-strong); }
+      .chip svg { width: 20px; height: 20px; }
+
+      /* suscripciones */
+      .stile { position: absolute; top: 32px; width: 256px; height: 112px; padding: 20px 24px; }
+      .stile .tnum { font-size: 40px; color: var(--ink); }
+      #subCard .nm { position: absolute; left: 186px; top: 36px; font-size: 44px; font-weight: 800; color: var(--ink); }
+      #subCard .pk { position: absolute; left: 186px; top: 96px; font-size: 25px; font-weight: 600; color: var(--muted); }
+      #subCard .am { position: absolute; left: 186px; top: 146px; font-size: 38px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+      #subCard .am small { font-size: 24px; color: var(--muted); font-weight: 600; }
+      .stat { position: absolute; right: 32px; top: 40px; width: 216px; height: 56px; border-radius: 28px; display: flex;
+        align-items: center; justify-content: center; gap: 10px; font-size: 23px; font-weight: 800; }
+      .stat.pend { background: #eef1ef; color: var(--muted); }
+      .stat.paid { background: var(--g-strong); color: #fff; opacity: 0; }
+      .stat svg { width: 24px; height: 24px; }
+
+      /* estadísticas */
+      #tabs { position: absolute; left: 900px; top: 150px; width: 880px; height: 76px; background: #fff; border: 1px solid var(--line);
+        display: flex; opacity: 0; }
+      #tabs div { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 29px; font-weight: 800; color: var(--g-label); }
+      #tabs .on { background: var(--g-strong); color: #fff; }
+      .sbar { position: absolute; left: 34px; right: 28px; bottom: 18px; height: 10px; border-radius: 5px; background: rgba(0, 0, 0, 0.05); overflow: hidden; }
+      .sbar div { width: 100%; height: 100%; border-radius: 5px; }
+      .det { font-size: 19px; font-weight: 600; color: var(--muted); margin-top: 2px; white-space: nowrap; opacity: 0; }
+
+      /* columna derecha (vista general) */
+      .rc { position: absolute; left: 1130px; width: 560px; }
+      .row { display: flex; justify-content: space-between; align-items: center; height: 64px; border-bottom: 1px solid var(--line);
+        font-size: 25px; color: #4f5d56; }
+      .row b { font-size: 28px; font-weight: 800; }
+
+      /* cierre */
+      #disc { position: absolute; left: 770px; top: 170px; width: 380px; height: 380px; border-radius: 50%;
+        background: radial-gradient(circle at 50% 45%, #ffffff 60%, #f3fbf6 100%);
+        box-shadow: 0 40px 80px -40px rgba(20, 100, 55, 0.45); opacity: 0; }
+      #bigLogo { position: absolute; left: 875px; top: 232px; width: 170px; height: 252px; opacity: 0; }
+      #bigLogo img { width: 100%; height: 100%; display: block; }
+      #wm { position: absolute; left: 0; top: 560px; width: 1920px; text-align: center; font-size: 128px; font-weight: 900;
+        letter-spacing: -0.035em; line-height: 1.05; color: var(--ink); }
+      #tag { position: absolute; left: 0; top: 712px; width: 1920px; text-align: center; font-size: 56px; font-weight: 700;
+        color: var(--g-label); opacity: 0; }
+      #cta { position: absolute; left: 630px; top: 820px; width: 660px; height: 92px; border-radius: 4px; background: var(--g-strong);
+        color: #fff; display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 35px; font-weight: 800;
+        box-shadow: 0 26px 40px -24px rgba(20, 110, 60, 0.7); opacity: 0; }
+      #cta svg { width: 34px; height: 34px; }
+
+      #hlProd { position: absolute; left: 0; top: 40px; width: 1920px; text-align: center; }
+      #hlProd h2 { font-size: 66px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+      #hlProd .secs { margin-top: 10px; font-size: 30px; font-weight: 700; color: #7d8a83; display: flex; justify-content: center; gap: 18px; opacity: 0; }
+      #hlProd .secs span { display: inline-block; }
+      #hlProd .secs em { font-style: normal; color: #b9c6bf; }
+    </style>
+  </head>
+  <body>
+    <!-- Ilustraciones reutilizables (volumen con degradados) -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <radialGradient id="gApple" cx="34%" cy="32%" r="75%">
+          <stop offset="0" stop-color="#ff7a62" /><stop offset="0.5" stop-color="#e8322a" /><stop offset="1" stop-color="#a5141a" />
+        </radialGradient>
+        <radialGradient id="gOrange" cx="36%" cy="34%" r="74%">
+          <stop offset="0" stop-color="#ffd27a" /><stop offset="0.5" stop-color="#ff9a1f" /><stop offset="1" stop-color="#e2600a" />
+        </radialGradient>
+        <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8fd24c" /><stop offset="1" stop-color="#2f8a2b" />
+        </linearGradient>
+        <linearGradient id="gBanana" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffec85" /><stop offset="0.55" stop-color="#f7c928" /><stop offset="1" stop-color="#d49a10" />
+        </linearGradient>
+        <linearGradient id="gBad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#c9a55a" /><stop offset="0.6" stop-color="#9a6d2c" /><stop offset="1" stop-color="#6a4618" />
+        </linearGradient>
+        <radialGradient id="gCoin" cx="38%" cy="34%" r="72%">
+          <stop offset="0" stop-color="#ffeb8a" /><stop offset="0.55" stop-color="#f4bb12" /><stop offset="1" stop-color="#c98a00" />
+        </radialGradient>
+        <linearGradient id="gWood" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#eab673" /><stop offset="1" stop-color="#c98a4a" />
+        </linearGradient>
+
+        <symbol id="s-apple" viewBox="0 0 200 200">
+          <ellipse cx="100" cy="188" rx="58" ry="7" fill="#0b3e1f" opacity="0.08" />
+          <path d="M100 56 C70 34 22 46 24 102 C26 152 62 188 88 184 C95 183 100 179 100 179 C100 179 105 183 112 184 C138 188 174 152 176 102 C178 46 130 34 100 56 Z" fill="url(#gApple)" />
+          <ellipse cx="64" cy="92" rx="14" ry="28" fill="#fff" opacity="0.32" transform="rotate(-18 64 92)" />
+          <path d="M100 60 C100 44 104 30 112 20" stroke="#6b3e1f" stroke-width="7" fill="none" stroke-linecap="round" />
+          <path d="M110 38 C122 14 150 8 168 18 C154 40 130 48 110 38 Z" fill="url(#gLeaf)" />
+          <path d="M114 36 C130 28 146 22 160 20" stroke="#2a7a26" stroke-width="2" fill="none" opacity="0.6" />
+        </symbol>
+        <symbol id="s-orange" viewBox="0 0 200 200">
+          <ellipse cx="100" cy="188" rx="60" ry="7" fill="#0b3e1f" opacity="0.08" />
+          <circle cx="100" cy="108" r="76" fill="url(#gOrange)" />
+          <g fill="#d66a0c" opacity="0.28">
+            <circle cx="70" cy="130" r="2.4" /><circle cx="128" cy="148" r="2.4" /><circle cx="140" cy="100" r="2.4" />
+            <circle cx="96" cy="160" r="2.4" /><circle cx="150" cy="128" r="2.4" /><circle cx="110" cy="128" r="2.4" />
+          </g>
+          <ellipse cx="72" cy="84" rx="16" ry="24" fill="#fff" opacity="0.3" transform="rotate(-30 72 84)" />
+          <circle cx="100" cy="36" r="5" fill="#8a5a12" />
+          <path d="M102 34 C110 14 136 6 154 14 C142 34 120 42 102 34 Z" fill="url(#gLeaf)" />
+        </symbol>
+        <symbol id="s-banana" viewBox="0 0 200 200">
+          <path d="M24 66 C48 152 150 166 188 96 C182 90 174 90 168 96 C138 134 70 130 38 60 Z" fill="url(#gBanana)" />
+          <path d="M40 72 C70 128 132 136 168 102" stroke="#d9a514" stroke-width="3" fill="none" opacity="0.55" />
+          <path d="M24 66 L38 60 L34 50 L22 54 Z" fill="#5d4214" />
+          <circle cx="186" cy="94" r="5" fill="#5d4214" />
+        </symbol>
+        <symbol id="s-banana-bad" viewBox="0 0 200 200">
+          <path d="M24 66 C48 152 150 166 188 96 C182 90 174 90 168 96 C138 134 70 130 38 60 Z" fill="url(#gBad)" />
+          <g fill="#3f2a0c" opacity="0.75">
+            <ellipse cx="70" cy="110" rx="7" ry="5" /><ellipse cx="104" cy="126" rx="9" ry="6" /><ellipse cx="140" cy="122" rx="6" ry="4" />
+            <ellipse cx="88" cy="104" rx="4" ry="3" /><ellipse cx="160" cy="108" rx="5" ry="4" />
+          </g>
+          <path d="M24 66 L38 60 L34 50 L22 54 Z" fill="#3a280a" />
+        </symbol>
+        <symbol id="s-coin" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="84" fill="url(#gCoin)" />
+          <circle cx="100" cy="100" r="64" fill="none" stroke="#fff4b8" stroke-width="5" opacity="0.7" />
+          <text x="100" y="122" text-anchor="middle" font-family="Figtree" font-weight="900" font-size="62" fill="#a86e00">Gs</text>
+        </symbol>
+        <symbol id="s-crate-back" viewBox="0 0 360 260">
+          <path d="M28 20 H332 L318 150 H42 Z" fill="#a8672e" />
+          <path d="M40 54 H320 M44 92 H316" stroke="#8d5523" stroke-width="5" />
+        </symbol>
+        <symbol id="s-crate-front" viewBox="0 0 360 260">
+          <rect x="14" y="108" width="332" height="44" rx="6" fill="url(#gWood)" />
+          <rect x="14" y="158" width="332" height="44" rx="6" fill="url(#gWood)" />
+          <rect x="14" y="208" width="332" height="44" rx="6" fill="url(#gWood)" />
+          <rect x="140" y="118" width="80" height="20" rx="10" fill="#7a4518" />
+          <rect x="14" y="104" width="34" height="150" rx="6" fill="#c3823f" />
+          <rect x="312" y="104" width="34" height="150" rx="6" fill="#c3823f" />
+          <path d="M60 182 H300 M60 232 H300" stroke="#b47436" stroke-width="3" opacity="0.6" />
+        </symbol>
+        <symbol id="s-bag" viewBox="0 0 200 200">
+          <path d="M56 70 C56 30 144 30 144 70" stroke="#9b6a35" stroke-width="9" fill="none" stroke-linecap="round" />
+          <path d="M36 66 H164 L152 182 H48 Z" fill="#dcae73" />
+          <path d="M36 66 H164 L162 84 H38 Z" fill="#c9965a" />
+        </symbol>
+        <symbol id="s-check" viewBox="0 0 24 24">
+          <path d="M5 12.5 L10 17.5 L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+        <symbol id="s-warn" viewBox="0 0 24 24">
+          <path d="M12 3 L22.5 21 H1.5 Z" fill="currentColor" />
+          <path d="M12 9.5 V14.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" /><circle cx="12" cy="17.8" r="1.5" fill="#fff" />
+        </symbol>
+        <symbol id="s-up" viewBox="0 0 24 24">
+          <rect width="24" height="24" rx="5" fill="#7f9fc4" /><path d="M12 18 V7 M7 11.5 L12 6.5 L17 11.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+        <symbol id="s-down" viewBox="0 0 24 24">
+          <rect width="24" height="24" rx="5" fill="#7f9fc4" /><path d="M12 6 V17 M7 12.5 L12 17.5 L17 12.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+        <symbol id="s-cal" viewBox="0 0 24 24">
+          <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="#12291d" stroke-width="2" /><path d="M3 10 H21 M8 3 V7 M16 3 V7" stroke="#12291d" stroke-width="2" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div id="root" data-composition-id="main" data-fps="60" data-start="0" data-width="1920" data-height="1080" data-duration="25">
+      <div id="film" class="clip" data-start="0" data-duration="25" data-track-index="0">
+        <div id="bgDeep"></div>
+        <div id="closeGlow"></div>
+
+        <!-- ═════════ APP (lo que la cámara aleja) ═════════ -->
+        <div id="app">
+          <div id="appInner">
+            <div id="appHeader"><div class="k">FRUTICONTROL</div><div class="t">Estadísticas</div></div>
+
+            <!-- CAJA -->
+            <div id="caja" class="card" style="left: 900px; top: 170px; width: 880px; height: 600px; opacity: 0">
+              <div class="abs cj" style="left: 32px; top: 32px; width: 816px; height: 76px; border: 1.5px solid #cfd9d3; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 29px; font-weight: 500">
+                <span data-k="date">19/10/2026</span><svg style="width: 28px; height: 28px"><use href="#s-cal" /></svg>
+              </div>
+              <div id="tIn" class="tile g cj" style="left: 32px; top: 132px; width: 398px; height: 116px">
+                <div class="tlabel"><svg class="ai"><use href="#s-up" /></svg>HA ENTRADO</div>
+                <div class="tnum" id="nIn">Gs. 0</div>
+              </div>
+              <div id="tOut" class="tile r cj" style="left: 450px; top: 132px; width: 398px; height: 116px">
+                <div class="tlabel"><svg class="ai"><use href="#s-down" /></svg>HA SALIDO</div>
+                <div class="tnum" id="nOut">Gs. 0</div>
+              </div>
+              <div id="btnIn" class="btn g cj" style="left: 32px; top: 442px; width: 398px; height: 84px">+ Ingreso</div>
+              <div id="btnOut" class="btn r cj" style="left: 450px; top: 442px; width: 398px; height: 84px">– Gasto</div>
+              <div class="foot cj" style="left: 32px; top: 548px">Beneficio = ingresos – gastos.</div>
+            </div>
+
+            <!-- PÉRDIDAS -->
+            <div id="perd" class="card" style="left: 900px; top: 262px; width: 880px; height: 610px; opacity: 0">
+              <div id="pHoy" class="tile r pj" style="left: 32px; top: 32px; width: 398px; height: 112px">
+                <div class="tlabel">HOY</div><div class="tnum" id="nPHoy">Gs. 0</div>
+              </div>
+              <div id="pMes" class="tile r pj" style="left: 450px; top: 32px; width: 398px; height: 112px">
+                <div class="tlabel">ESTE MES</div><div class="tnum" id="nPMes">Gs. 35.000</div>
+              </div>
+              <div id="btnLoss" class="btn r pj" style="left: 32px; top: 164px; width: 816px; height: 76px; font-size: 29px">+ Registrar pérdida</div>
+              <div class="sect pj" style="left: 32px; top: 266px">Historial</div>
+              <div id="row1" class="abs pj hrow" style="left: 32px; top: 382px; width: 816px; height: 64px"></div>
+              <div id="row2" class="abs pj hrow" style="left: 32px; top: 458px; width: 816px; height: 64px"></div>
+              <div class="foot pj" style="left: 32px; top: 540px; width: 816px">Las pérdidas se anotan solo como información. No bajan el beneficio de la caja.</div>
+            </div>
+
+            <!-- INVENTARIO -->
+            <div id="btnAdd" class="btn g" style="left: 900px; top: 170px; width: 880px; height: 84px; clip-path: inset(0 100% 0 0)">+ Añadir fruta</div>
+            <div id="inv0" class="card inv" style="left: 900px; opacity: 0">
+              <svg class="ic fr"><use href="#s-apple" /></svg>
+              <div class="nm">Manzanas</div><div class="kg"><span class="num" id="kg0">0</span> <small>kg</small></div>
+              <div class="trk"><div class="fill" id="fill0"></div></div>
+              <div class="chip ok" id="chip0"><svg><use href="#s-check" /></svg>Stock correcto</div>
+            </div>
+            <div id="inv1" class="card inv" style="left: 1200px; opacity: 0">
+              <svg class="ic fr"><use href="#s-orange" /></svg>
+              <div class="nm">Naranjas</div><div class="kg"><span class="num" id="kg1">0</span> <small>kg</small></div>
+              <div class="trk"><div class="fill" id="fill1"></div></div>
+              <div class="chip ok" id="chip1"><svg><use href="#s-check" /></svg>Stock correcto</div>
+            </div>
+            <div id="inv2" class="card inv" style="left: 1500px; opacity: 0">
+              <svg class="ic fr"><use href="#s-banana" /></svg>
+              <div class="nm">Plátanos</div><div class="kg" id="kgWrap2"><span class="num" id="kg2">0</span> <small>kg</small></div>
+              <div class="trk"><div class="fill" id="fill2"></div></div>
+              <div class="chip ok" id="chip2ok"><svg><use href="#s-check" /></svg>Stock correcto</div>
+              <div class="chip low" id="chip2low" style="opacity: 0"><svg><use href="#s-warn" /></svg>Stock bajo</div>
+            </div>
+
+            <!-- SUSCRIPCIONES -->
+            <div id="subsTop" class="card" style="left: 900px; top: 170px; width: 880px; height: 226px; opacity: 0">
+              <div class="tile g stile sj" style="left: 32px"><div class="tlabel">CLIENTES</div><div class="tnum" data-k="clients">4</div></div>
+              <div id="tCob" class="tile g stile sj" style="left: 312px"><div class="tlabel">COBRADO MES</div><div class="tnum" id="nCob">Gs. 300.000</div></div>
+              <div id="tPacks" class="tile g stile sj" style="left: 592px"><div class="tlabel">POR ENTREGAR</div>
+                <div class="tnum" style="position: relative; height: 50px; overflow: hidden"><span id="pk0" style="position: absolute; left: 0; top: 0">0</span><span id="pk1" style="position: absolute; left: 0; top: 0">1</span></div>
+              </div>
+              <div class="foot sj" style="left: 32px; top: 166px">Al marcar "Pagó" se suma el cobro a la caja de hoy automáticamente.</div>
+            </div>
+            <div id="subCard" class="card" style="left: 900px; top: 430px; width: 880px; height: 250px; clip-path: inset(0 100% 0 0 round 6px)">
+              <div class="nm sc">María</div>
+              <div class="pk sc">Pack mensual · fruta variada</div>
+              <div class="am sc">Gs. 100.000 <small>/ mes</small></div>
+              <div class="stat pend sc" id="stPend">Pendiente</div>
+              <div class="stat paid" id="stPaid"><svg><use href="#s-check" /></svg>Pagado</div>
+              <div id="ring" class="abs" style="right: 92px; top: 20px; width: 96px; height: 96px; border-radius: 50%; border: 4px solid var(--g-strong); opacity: 0"></div>
+              <div id="btnPaid" class="btn g sc" style="right: 32px; top: 150px; left: auto; width: 216px; height: 68px; font-size: 28px">Pagó</div>
+            </div>
+
+            <!-- ESTADÍSTICAS -->
+            <div id="tabs"><div class="on">Día</div><div>Semana</div><div>Mes</div></div>
+            <div id="statsCard" class="card" style="left: 900px; top: 246px; width: 880px; height: 604px; opacity: 0">
+              <div class="sect" style="left: 32px; top: 30px">Hoy</div>
+              <div id="sIn" class="tile g" style="left: 32px; top: 72px; width: 398px; height: 170px; opacity: 0">
+                <div class="tlabel">INGRESOS</div><div class="tnum" id="nSIn">Gs. 0</div>
+                <div class="det" id="dIn">Ventas 150.000 · María 100.000</div>
+                <div class="sbar"><div id="bIn" style="background: var(--g-strong)"></div></div>
+              </div>
+              <div id="sOut" class="tile r" style="left: 450px; top: 72px; width: 398px; height: 170px; opacity: 0">
+                <div class="tlabel">GASTOS</div><div class="tnum" id="nSOut">Gs. 0</div>
+                <div class="det" id="dOut">Bolsas 20.000 · Proveedor 60.000</div>
+                <div class="sbar"><div id="bOut" style="background: var(--r-strong)"></div></div>
+              </div>
+              <div id="sLoss" class="tile r" style="left: 32px; top: 262px; width: 398px; height: 122px; opacity: 0; background: #fdf3f1; border-left-color: #e3968c">
+                <div class="tlabel">PÉRDIDAS REGISTRADAS</div><div class="tnum" id="nSLoss" style="font-size: 40px">Gs. 0</div>
+              </div>
+              <div id="sNote" class="abs" style="left: 450px; top: 262px; width: 398px; height: 122px; border: 2px dashed #e0c4bf; border-radius: 4px; padding: 18px 24px; font-size: 22px; font-weight: 600; line-height: 1.35; color: #8a4a40; opacity: 0">
+                Se muestran aparte: no se restan otra vez del beneficio.
+              </div>
+              <div id="sBen" class="abs" style="left: 32px; top: 404px; width: 816px; height: 168px; border-radius: 4px; background: linear-gradient(90deg, var(--ben-a), var(--ben-b)); box-shadow: 0 26px 40px -26px rgba(20, 110, 60, 0.6); opacity: 0">
+                <div class="abs" style="left: 30px; top: 24px; font-size: 22px; font-weight: 500; letter-spacing: 0.1em; color: var(--ben-ink)">BENEFICIO (INGRESOS – GASTOS)</div>
+                <div class="abs num" id="nSBen" style="left: 30px; top: 58px; font-size: 84px; font-weight: 900; color: var(--ben-ink)">Gs. 0</div>
+                <div class="abs num" id="fSBen" style="right: 30px; top: 92px; font-size: 27px; font-weight: 700; color: var(--ben-ink); opacity: 0">250.000 – 80.000</div>
+              </div>
+            </div>
+
+            <!-- COLUMNA DERECHA (vista general) -->
+            <div id="rc1" class="card rc" style="top: 150px; height: 330px; padding: 26px 30px; opacity: 0">
+              <div class="sect" style="position: static; margin-bottom: 8px">Resumen de hoy</div>
+              <div class="row">Ingresos <b style="color: var(--g-num)" data-k="sumIn">Gs. 250.000</b></div>
+              <div class="row">Gastos <b style="color: var(--r-num)" data-k="sumOut">Gs. 80.000</b></div>
+              <div class="row">Pérdidas <b style="color: var(--r-num)" data-k="sumLoss">Gs. 12.000</b></div>
+              <div class="row" style="border: 0">Beneficio <b data-k="sumBen">Gs. 170.000</b></div>
+            </div>
+            <div id="rc2" class="card rc" style="top: 504px; height: 150px; padding: 26px 30px; opacity: 0">
+              <div class="sect" style="position: static">Packs por entregar</div>
+              <div style="font-size: 60px; font-weight: 900; margin-top: 6px">1</div>
+            </div>
+            <div id="rc3" class="card rc" style="top: 678px; height: 158px; padding: 26px 30px; opacity: 0">
+              <div class="sect" style="position: static">Stock bajo</div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 18px; font-size: 28px; font-weight: 700; color: var(--r-strong)">
+                <svg style="width: 28px; height: 28px"><use href="#s-warn" /></svg>Plátanos · 3 kg
+              </div>
+            </div>
+
+            <!-- MENÚ LATERAL -->
+            <div id="sidebar">
+              <div id="sbLogo"><img src="assets/fruticontrol-logo.png" alt="" /></div>
+              <div id="sbDiv"></div>
+              <div id="navHi"></div>
+              <div class="nav" id="nav0" style="top: 212px"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5" /><path d="M3 10 H21 M15 14.5 H18" /></svg>CAJA</div>
+              <div class="nav" id="nav1" style="top: 333px"><svg viewBox="0 0 24 24"><path d="M2 7 L8.5 13.5 L13.5 8.5 L21 16" /><path d="M15 16 H21 V10" /></svg>PÉRDIDAS</div>
+              <div class="nav" id="nav2" style="top: 454px"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.6" /><path d="M2.5 20 C3 15.5 6 14 9 14 C12 14 15 15.5 15.5 20" /><path d="M15.5 4.6 A3.6 3.6 0 0 1 15.5 11.4 M17.5 14.3 C19.6 15 21.2 16.8 21.5 20" /></svg>SUSCRIP.</div>
+              <div class="nav" id="nav3" style="top: 575px"><svg viewBox="0 0 24 24"><path d="M12 2.8 L20.5 7.4 V16.6 L12 21.2 L3.5 16.6 V7.4 Z" /><path d="M3.5 7.4 L12 12 L20.5 7.4 M12 12 V21.2" /></svg>INVENTARIO</div>
+              <div class="nav" id="nav4" style="top: 696px"><svg viewBox="0 0 24 24"><path d="M3 21 H21 M6 21 V12 M10.5 21 V5 M15 21 V9.5 M19 21 V14" /></svg>ESTADÍS.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═════════ TITULARES ═════════ -->
+        <div id="q"><span class="ln"><span>¿Sabes cuánto gana</span></span><span class="ln"><span class="hi">tu frutería?</span></span></div>
+
+        <div class="hl" id="hl-caja"><div class="kick"><i></i><span data-k="kCaja">Caja</span></div>
+          <h2><span class="ln"><span>Apunta lo que</span></span><span class="ln"><span>entra y sale.</span></span></h2>
+          <div class="sub" data-k="sCaja">Ingresos y gastos del día, sin cuentas complicadas.</div></div>
+        <div class="hl red" id="hl-perd"><div class="kick"><i></i><span>Pérdidas</span></div>
+          <h2><span class="ln"><span>Controla lo que</span></span><span class="ln"><span>se estropea.</span></span></h2>
+          <div class="sub">Se anotan aparte, sin restarlas dos veces.</div></div>
+        <div class="hl" id="hl-inv"><div class="kick"><i></i><span>Inventario</span></div>
+          <h2><span class="ln"><span>Toda tu fruta,</span></span><span class="ln"><span>organizada.</span></span></h2>
+          <div class="sub">Los kilos que te quedan y aviso de stock bajo.</div></div>
+        <div class="hl" id="hl-subs"><div class="kick"><i></i><span>Suscripciones</span></div>
+          <h2><span class="ln"><span>Tus clientes</span></span><span class="ln"><span>de cada mes.</span></span></h2>
+          <div class="sub">Quién ha pagado y qué packs te toca entregar.</div></div>
+        <div class="hl" id="hl-stats"><div class="kick"><i></i><span>Estadísticas</span></div>
+          <h2><span class="ln"><span>Descubre cómo</span></span><span class="ln"><span>va tu negocio.</span></span></h2>
+          <div class="sub">Por día, semana o mes. Sin contabilidad.</div></div>
+        <div id="hlProd"><h2><span class="ln"><span>Todo tu negocio en un solo lugar.</span></span></h2>
+          <div class="secs"><span id="w0">Caja</span><em>·</em><span id="w1">Pérdidas</span><em>·</em><span id="w2">Suscripciones</span><em>·</em><span id="w3">Inventario</span><em>·</em><span id="w4">Estadísticas</span></div></div>
+
+        <!-- ═════════ ELEMENTOS QUE VIAJAN ENTRE ESCENAS ═════════ -->
+        <div id="chaos"></div>
+        <div id="benef">
+          <div class="full"><div class="l">BENEFICIO ESTIMADO DEL DÍA</div><div class="n" id="nBen">Gs. 0</div></div>
+          <div class="compact"><span class="l">BENEFICIO DE CAJA</span><span class="n" id="nBenC">Gs. 130.000</span>
+            <span class="tag"><svg><use href="#s-check" /></svg>Las pérdidas no lo cambian</span></div>
+        </div>
+
+        <!-- ticket de venta (nace de la manzana) -->
+        <div class="anc" id="aSale" style="left: 1340px; top: 872px">
+          <div class="mbox morph" id="mSale" style="width: 150px; height: 150px; border-radius: 75px">
+            <div class="barL" style="background: var(--g-bar)"></div>
+            <div class="mc" id="cSale"><svg class="fr"><use href="#s-apple" /></svg><div class="lab">Venta de fruta<small>Ingreso · hoy 10:42</small></div><b style="color: var(--g-num)" data-k="saleAmt">+ Gs. 150.000</b></div>
+          </div>
+        </div>
+        <!-- bolsa → gasto -->
+        <div class="anc" id="aBag" style="left: 1340px; top: 872px"><div class="mbox" id="bag" style="width: 150px; height: 150px; overflow: visible"><svg class="fr"><use href="#s-bag" /></svg></div></div>
+        <div class="anc" id="aGasto" style="left: 1340px; top: 872px">
+          <div class="mbox morph" id="mGasto" style="width: 150px; height: 150px; border-radius: 75px">
+            <div class="barL" style="background: var(--r-strong)"></div>
+            <div class="mc" id="cGasto"><svg class="fr"><use href="#s-bag" /></svg><div class="lab">Compra de bolsas<small>Gasto · hoy 11:05</small></div><b style="color: var(--r-num)" data-k="bagAmt">– Gs. 20.000</b></div>
+          </div>
+        </div>
+
+        <!-- racimo de plátanos -->
+        <div class="anc" id="aBunch" style="left: 1340px; top: 600px">
+          <div class="mbox" id="bunch" style="width: 340px; height: 300px; overflow: visible">
+            <svg viewBox="0 0 340 300" class="fr">
+              <g id="ban1" transform="rotate(-22 170 70)"><use href="#s-banana" x="60" y="20" width="230" height="230" /></g>
+              <g transform="rotate(0 170 70)"><use href="#s-banana" x="70" y="40" width="230" height="230" /><use id="bad2" href="#s-banana-bad" x="70" y="40" width="230" height="230" opacity="0" /></g>
+              <g transform="rotate(22 170 70)"><use href="#s-banana" x="80" y="60" width="230" height="230" /><use id="bad3" href="#s-banana-bad" x="80" y="60" width="230" height="230" opacity="0" /></g>
+              <path d="M92 70 C100 52 112 40 130 36" stroke="#5d4214" stroke-width="14" stroke-linecap="round" fill="none" />
+            </svg>
+          </div>
+        </div>
+        <!-- registro de pérdida (nace del racimo) -->
+        <div class="anc" id="aRow0" style="left: 1340px; top: 600px">
+          <div class="mbox" id="mRow0" style="width: 160px; height: 160px; border-radius: 80px; background: #f5d04a">
+            <div class="mc" id="cRow0" style="width: 816px; height: 64px; padding: 0 20px">
+              <svg class="fr" style="width: 46px; height: 46px"><use href="#s-banana-bad" /></svg>
+              <div class="lab" style="font-size: 25px">Plátanos estropeados · 3 kg</div>
+              <span style="font-size: 20px; color: var(--muted); margin-left: 18px">hoy</span>
+              <b style="color: var(--r-num); font-size: 30px" data-k="lossAmt">Gs. 12.000</b>
+            </div>
+          </div>
+        </div>
+
+        <div id="field"></div>
+
+        <!-- caja de fruta → pack -->
+        <div class="anc crate" id="aCrateB" style="left: 1340px; top: 650px"><div class="mbox" id="crateB" style="width: 360px; height: 260px; overflow: visible"><svg class="fr"><use href="#s-crate-back" /></svg></div></div>
+        <div id="hops"></div>
+        <div class="anc crate" id="aCrateF" style="left: 1340px; top: 650px"><div class="mbox" id="crateF" style="width: 360px; height: 260px; overflow: visible"><svg class="fr"><use href="#s-crate-front" /></svg></div></div>
+        <div class="anc" id="aToast" style="left: 1340px; top: 760px">
+          <div class="mbox" id="toast" style="width: 520px; height: 72px; border-radius: 36px; background: var(--g-strong); color: #fff; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 27px; font-weight: 800; white-space: nowrap; opacity: 0">
+            <svg style="width: 26px; height: 26px"><use href="#s-check" /></svg>+ Gs. 100.000 a la caja de hoy
+          </div>
+        </div>
+
+        <div id="chips"></div>
+
+        <!-- ═════════ CIERRE ═════════ -->
+        <div id="disc"></div>
+        <div id="closeFruits"></div>
+        <div id="bigLogo"><img src="assets/fruticontrol-logo.png" alt="FrutiControl" /></div>
+        <div id="wm"><span class="ln"><span>FrutiControl</span></span></div>
+        <div id="tag">Tu frutería, bajo control.</div>
+        <div id="cta">Empieza a organizar tu negocio<svg viewBox="0 0 24 24"><path d="M5 12 H19 M13 6 L19 12 L13 18" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+      </div>
+    </div>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════
+         CONFIGURACIÓN EDITABLE — datos ficticios, textos y tiempos
+         ══════════════════════════════════════════════════════════════ */
+      const DATA = {
+        sale: 150000,          // venta de fruta (Caja)
+        bags: 20000,           // compra de bolsas (Caja)
+        loss: 12000,           // plátanos estropeados (solo información)
+        lossMonthBefore: 35000,
+        subPrice: 100000,      // María · pack mensual
+        cobradoBefore: 300000, // cobrado este mes antes de María
+        supplier: 60000,       // compra a proveedor (otro gasto del día)
+        stock: { apples: 25, oranges: 30, bananas: 3 },
+      };
+      DATA.dayIn = DATA.sale + DATA.subPrice;      // 250.000
+      DATA.dayOut = DATA.bags + DATA.supplier;     // 80.000
+      DATA.dayBen = DATA.dayIn - DATA.dayOut;      // 170.000 (las pérdidas NO se restan)
+
+      // Inicio de cada escena (segundos). Cadencia: rápido → lento → rápido → rápido → lento → rápido → calma
+      const T = { problema: 0, caja: 2.35, perdidas: 6.7, inventario: 9.3, suscrip: 12.9, stats: 17.25, producto: 20.55, cierre: 21.8 };
+
+      const fmt = (n) => "Gs. " + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => Array.from(document.querySelectorAll(s));
+      const NS = "http://www.w3.org/2000/svg";
+
+      function fruitEl(type, size, parent, left, top, id) {
+        const d = document.createElement("div");
+        d.className = "abs";
+        if (id) d.id = id;
+        d.style.cssText = `left:${left - size / 2}px;top:${top - size / 2}px;width:${size}px;height:${size}px;`;
+        d.innerHTML = `<svg class="fr"><use href="#s-${type}"/></svg>`;
+        parent.appendChild(d);
+        return d;
+      }
+
+      // filas del historial de pérdidas (datos previos del mes)
+      [
+        ["row1", "orange", "Naranjas golpeadas · 2 kg", "15/10", 10000],
+        ["row2", "apple", "Manzanas golpeadas · 2 kg", "12/10", 25000],
+      ].forEach(([id, ic, txt, day, amt]) => {
+        $("#" + id).innerHTML = `<div style="display:flex;align-items:center;gap:18px;height:64px;padding:0 20px;border-bottom:1px solid var(--line);white-space:nowrap">
+          <svg class="fr" style="width:42px;height:42px"><use href="#s-${ic}"/></svg>
+          <span style="font-size:25px;font-weight:700">${txt}</span><span style="font-size:20px;color:var(--muted)">${day}</span>
+          <b style="margin-left:auto;font-size:28px;color:var(--r-num)">${fmt(amt)}</b></div>`;
+      });
+
+      /* ── escena 1: el caos del día a día ── */
+      const chaos = $("#chaos");
+      const C = []; // {el, from:[dx,dy], rot}
+      function addChaos(el, from, rot) { C.push({ el, from, rot }); return el; }
+      const hero = addChaos(fruitEl("apple", 160, chaos, 290, 200, "heroApple"), [-520, -380], -14);
+      addChaos(fruitEl("banana", 250, chaos, 1660, 200), [560, -420], 18);
+      addChaos(fruitEl("orange", 170, chaos, 240, 860), [-560, 380], 6);
+      addChaos(fruitEl("orange", 120, chaos, 1770, 650), [520, 60], -10);
+      addChaos(fruitEl("apple", 130, chaos, 1210, 900), [180, 520], 10);
+      addChaos(fruitEl("coin", 80, chaos, 470, 360), [-420, -120], -20);
+      addChaos(fruitEl("coin", 70, chaos, 1300, 190), [120, -480], 16);
+      addChaos(fruitEl("coin", 74, chaos, 520, 960), [-260, 420], 8);
+      function ticketEl(cls, ic, label, amt, left, top, w) {
+        const d = document.createElement("div");
+        d.className = "ticket " + cls;
+        d.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:92px;`;
+        d.innerHTML = `<svg class="fr"><use href="#s-${ic}"/></svg>${label}<b>${amt}</b>`;
+        chaos.appendChild(d);
+        return d;
+      }
+      addChaos(ticketEl("g", "apple", "Venta", "+ Gs. 35.000", 50, 560, 360), [-700, 0], -7);
+      addChaos(ticketEl("r", "banana-bad", "Pérdida", "Gs. 8.000", 1520, 330, 350), [700, -100], 6);
+      addChaos(ticketEl("r", "bag", "Gasto", "– Gs. 20.000", 690, 790, 370), [0, 520], 3);
+      // cajas apiladas
+      function crateStack(left, top, w, fruits) {
+        const d = document.createElement("div");
+        d.className = "abs";
+        d.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${w * 0.72}px;`;
+        let inner = `<svg class="fr" style="position:absolute;inset:0"><use href="#s-crate-back"/></svg>`;
+        fruits.forEach(([t, x, y, s]) => (inner += `<svg class="fr" style="position:absolute;left:${x * w}px;top:${y * w}px;width:${s * w}px;height:${s * w}px"><use href="#s-${t}"/></svg>`));
+        inner += `<svg class="fr" style="position:absolute;inset:0"><use href="#s-crate-front"/></svg>`;
+        d.innerHTML = inner;
+        chaos.appendChild(d);
+        return d;
+      }
+      const crate1 = addChaos(crateStack(1450, 820, 320, [["orange", 0.12, 0.08, 0.3], ["orange", 0.36, 0.05, 0.3], ["orange", 0.6, 0.09, 0.3]]), [0, -1200], 0);
+      const crate2 = addChaos(crateStack(1500, 650, 270, [["apple", 0.14, 0.06, 0.32], ["apple", 0.42, 0.04, 0.32], ["apple", 0.66, 0.1, 0.28]]), [0, -1100], -4);
+
+      /* ── inventario: frutas sueltas que se agrupan ── */
+      const field = $("#field");
+      const CARD_X = [1040, 1340, 1640], ICON_Y = 383;
+      const FR = [
+        // tipo, posición dispersa, desde, grupo
+        ["apple", [990, 420], [-900, -300], 0], ["orange", [1250, 360], [0, -800], 1], ["banana", [1660, 420], [700, -350], 2],
+        ["apple", [1130, 620], [-800, 250], 0], ["orange", [1470, 560], [700, 300], 1], ["apple", [1720, 650], [600, 200], 0],
+        ["orange", [1020, 820], [-600, 500], 1], ["banana", [1340, 760], [0, 650], 2], ["orange", [1580, 860], [450, 500], 1],
+        ["apple", [1260, 880], [-200, 600], 0],
+      ];
+      const ring = [[0, 0], [-62, -26], [62, -26], [-38, 48], [44, 50]];
+      const fieldEls = FR.map(([t, s]) => fruitEl(t, 112, field, s[0], s[1]));
+      const lossBanana = fruitEl("banana", 112, field, 1340, 600, "lossBanana"); // nace del registro de pérdida
+
+      /* ── suscripción: frutas que saltan a la caja ── */
+      const hops = $("#hops");
+      const HOP = [
+        ["apple", 0, [1268, 606]], ["orange", 1, [1350, 596]], ["banana", 2, [1420, 612]], ["apple", 0, [1305, 580]], ["orange", 1, [1392, 574]],
+      ];
+      const hopEls = HOP.map(([t, c]) => fruitEl(t, 104, hops, CARD_X[c], ICON_Y));
+
+      /* ── estadísticas: tarjetas que encajan en el panel ── */
+      const chipsBox = $("#chips");
+      const CHIPS = [
+        // id, clase, texto, importe, posición, destino
+        ["ch1", "g", "Venta", "+ " + fmt(DATA.sale).slice(4), [1110, 430], [1131, 393]],
+        ["ch2", "g", "María", "+ " + fmt(DATA.subPrice).slice(4), [1340, 555], [1131, 393]],
+        ["ch3", "r", "Bolsas", "– " + fmt(DATA.bags).slice(4), [1580, 420], [1549, 393]],
+        ["ch4", "r", "Proveedor", "– " + fmt(DATA.supplier).slice(4), [1590, 560], [1549, 393]],
+        ["ch5", "r", "Plátanos", fmt(DATA.loss).slice(4), [1150, 700], [1131, 569]],
+      ];
+      const chipEls = CHIPS.map(([id, cls, lab, amt, p]) => {
+        const a = document.createElement("div");
+        a.className = "anc";
+        a.style.cssText = `left:${p[0]}px;top:${p[1]}px`;
+        a.innerHTML = `<div class="ticket ${cls}" id="${id}" style="left:0;top:0;width:330px;height:76px;font-size:24px;opacity:0"><span>${lab}</span><b>${amt}</b></div>`;
+        chipsBox.appendChild(a);
+        return a.firstChild;
+      });
+
+      /* ── cierre: frutas que se acomodan alrededor de la marca ── */
+      const closeBox = $("#closeFruits");
+      const CF = [
+        ["apple", 200, [520, 360], [-700, -200], -12], ["orange", 180, [1400, 330], [700, -260], 10],
+        ["banana", 240, [400, 800], [-700, 300], -8], ["orange", 120, [1480, 830], [650, 320], -6], ["coin", 70, [610, 480], [-500, 0], -14],
+        ["apple", 110, [1330, 480], [520, 40], 12],
+      ];
+      const cfEls = CF.map(([t, s, p]) => fruitEl(t, s, closeBox, p[0], p[1]));
+
+      /* ══════════════════════════════════════════════════════════════
+         LÍNEA DE TIEMPO MAESTRA (un único timeline en pausa)
+         ══════════════════════════════════════════════════════════════ */
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+      function count(el, from, to, at, dur, ease, map) {
+        const o = { v: from };
+        const node = typeof el === "string" ? $(el) : el;
+        const f = map || ((v) => fmt(Math.abs(v - to) < 1 ? to : Math.round(v / 1000) * 1000));
+        tl.fromTo(o, { v: from }, { v: to, duration: dur, ease: ease || "power2.out", immediateRender: false, onUpdate: () => (node.textContent = f(o.v)) }, at);
+      }
+      function press(sel, at) {
+        tl.to(sel, { scale: 0.93, duration: 0.12, ease: "power2.in" }, at);
+        tl.to(sel, { scale: 1, duration: 0.42, ease: "back.out(2.4)" }, at + 0.12);
+      }
+      function pulse(sel, at, s) {
+        tl.to(sel, { scale: s || 1.04, duration: 0.14, ease: "power2.out" }, at);
+        tl.to(sel, { scale: 1, duration: 0.45, ease: "power3.out" }, at + 0.14);
+      }
+      function hlIn(id, at) {
+        tl.set(id, { opacity: 1 }, at);
+        tl.fromTo(`${id} .kick`, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, at);
+        tl.fromTo(`${id} h2 .ln > span`, { yPercent: 112 }, { yPercent: 0, duration: 0.7, ease: "expo.out", stagger: 0.09 }, at + 0.05);
+        tl.fromTo(`${id} .sub`, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, at + 0.32);
+      }
+      function hlOut(id, at) {
+        tl.set(id, { opacity: 0 }, at + 0.5);
+        tl.to(`${id} h2 .ln > span`, { yPercent: -135, duration: 0.36, ease: "power3.in", stagger: 0.05 }, at);
+        tl.to([`${id} .kick`, `${id} .sub`], { opacity: 0, duration: 0.25, ease: "power1.in" }, at);
+      }
+      const NAV_STEP = 121;
+      function navTo(i, at, d) {
+        tl.to("#navHi", { y: i * NAV_STEP, duration: d || 0.5, ease: "power3.inOut" }, at);
+      }
+
+      // estados iniciales (en t=0 del timeline → seguros al recorrer)
+      tl.set(["#q .ln > span"], { yPercent: 112 }, 0);
+      tl.set(".hl h2 .ln > span, #hlProd h2 .ln > span, #wm .ln > span", { yPercent: 112 }, 0);
+      tl.set(".mbox", { xPercent: -50, yPercent: -50 }, 0);
+      tl.set(".hl, #hlProd, #wm", { opacity: 0 }, 0);
+      tl.set("#sidebar", { x: -170 }, 0);
+      tl.set(["#mSale", "#mGasto", "#mRow0"], { opacity: 0 }, 0);
+      tl.set(["#bag", "#bunch", "#crateB", "#crateF"], { opacity: 0 }, 0);
+      tl.set(fieldEls.concat([lossBanana], hopEls, cfEls), { opacity: 0 }, 0);
+      tl.set(["#row1", "#row2"], { y: -76 }, 0);
+      tl.set(["#fill0", "#fill1", "#fill2", "#bIn", "#bOut"], { scaleX: 0, transformOrigin: "0% 50%" }, 0);
+      tl.set("#pk1", { yPercent: 110 }, 0);
+
+      /* 0 – 2.4 s · EL PROBLEMA (rápido → pausa de lectura) */
+      const ENTRY_DELAYS = [0, 0.05, 0.11, 0.2, 0.16, 0.28, 0.33, 0.24, 0.07, 0.38, 0.19, 0.44, 0.52];
+      C.forEach((c, i) => {
+        const d = ENTRY_DELAYS[i % ENTRY_DELAYS.length];
+        const isCrate = c.el === crate1 || c.el === crate2;
+        if (isCrate) {
+          tl.fromTo(c.el, { y: c.from[1], rotation: c.rot }, { y: 0, duration: 0.5, ease: "power3.in" }, d + 0.12);
+          tl.to(c.el, { scaleY: 0.94, duration: 0.08, ease: "power1.out", transformOrigin: "50% 100%" }, d + 0.62);
+          tl.to(c.el, { scaleY: 1, duration: 0.3, ease: "back.out(2)" }, d + 0.7);
+        } else {
+          tl.fromTo(c.el, { x: c.from[0], y: c.from[1], rotation: c.rot - 40 * Math.sign(c.from[0] || 1), opacity: 0 },
+            { x: 0, y: 0, rotation: c.rot, opacity: 1, duration: 0.55 + (i % 3) * 0.06, ease: "expo.out" }, d);
+        }
+        // pequeña respiración durante la pausa (sin flotar para siempre)
+        tl.to(c.el, { y: (i % 2 ? -1 : 1) * 7, rotation: c.rot + (i % 2 ? 2 : -2), duration: 1.25, ease: "sine.inOut" }, 1.1);
+      });
+      tl.fromTo("#q .ln > span", { yPercent: 112 }, { yPercent: 0, duration: 0.75, ease: "expo.out", stagger: 0.12 }, 0.32);
+      tl.fromTo("#q .hi", { color: "#12291d" }, { color: "#2c9a5e", duration: 0.4, ease: "power1.inOut" }, 1.2);
+
+      /* 2.35 – 6.7 s · CAJA (lento, se lee la resta) */
+      let t = T.caja;
+      tl.to("#q .ln > span", { yPercent: -135, duration: 0.36, ease: "power3.in", stagger: 0.05 }, t);
+      tl.set("#q", { opacity: 0 }, t + 0.5);
+      C.forEach((c, i) => {
+        if (c.el === hero) return;
+        const dx = c.from[0] * 0.7, dy = c.from[1] * 0.7;
+        tl.to(c.el, { x: dx, y: dy, opacity: 0, scale: 0.8, duration: 0.38, ease: "power3.in" }, t + 0.02 * (i % 6));
+      });
+      // la manzana vendida: anticipación → viaje → se convierte en ticket
+      tl.to(hero, { scale: 1.16, rotation: -24, duration: 0.14, ease: "power2.out" }, t);
+      tl.to(hero, { x: 1340 - 290, duration: 0.55, ease: "power3.inOut" }, t + 0.14);
+      tl.to(hero, { y: 872 - 200, rotation: 330, duration: 0.55, ease: "power2.in" }, t + 0.14);
+      tl.to(hero, { scaleX: 1.25, scaleY: 0.8, duration: 0.1, ease: "power2.out" }, t + 0.69);
+      tl.to(hero, { scale: 0.2, opacity: 0, duration: 0.26, ease: "power2.in" }, t + 0.79);
+      tl.set("#mSale", { opacity: 1, backgroundColor: "#e8322a" }, t + 0.72);
+      tl.to("#mSale", { width: 540, height: 110, borderRadius: 8, backgroundColor: "#ffffff", duration: 0.62, ease: "power3.inOut" }, t + 0.74);
+      tl.to("#cSale", { opacity: 1, duration: 0.3 }, t + 1.12);
+
+      tl.to("#sidebar", { x: 0, duration: 0.6, ease: "expo.out" }, t + 0.3);
+      hlIn("#hl-caja", t + 0.55);
+      tl.fromTo("#caja", { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, t + 0.62);
+      tl.fromTo("#caja .cj", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: "power3.out" }, t + 0.7);
+      tl.fromTo("#benef", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, t + 0.86);
+
+      // + Ingreso
+      press("#btnIn", t + 1.3);
+      tl.to("#aSale", { x: 1131 - 1340, y: 360 - 872, duration: 0.46, ease: "power3.inOut" }, t + 1.38);
+      tl.to("#mSale", { scale: 0.36, duration: 0.46, ease: "power2.in" }, t + 1.38);
+      tl.to("#mSale", { opacity: 0, duration: 0.12, ease: "none" }, t + 1.74);
+      pulse("#tIn", t + 1.8, 1.05);
+      count("#nIn", 0, DATA.sale, t + 1.8, 0.6);
+      count("#nBen", 0, DATA.sale, t + 1.86, 0.62);
+
+      // – Gasto
+      press("#btnOut", t + 2.00);
+      tl.fromTo("#bag", { opacity: 0, scale: 0.2, rotation: -20 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.34, ease: "back.out(1.7)" }, t + 2.05);
+      tl.to("#bag", { scaleX: 1.15, scaleY: 0.85, duration: 0.1, ease: "power2.out" }, t + 2.41);
+      tl.to("#bag", { scale: 0.3, opacity: 0, duration: 0.22, ease: "power2.in" }, t + 2.51);
+      tl.set("#mGasto", { opacity: 1, backgroundColor: "#dcae73" }, t + 2.50);
+      tl.to("#mGasto", { width: 540, height: 110, borderRadius: 8, backgroundColor: "#ffffff", duration: 0.5, ease: "power3.inOut" }, t + 2.51);
+      tl.to("#cGasto", { opacity: 1, duration: 0.25 }, t + 2.80);
+      tl.to("#aGasto", { x: 1549 - 1340, y: 360 - 872, duration: 0.44, ease: "power3.inOut" }, t + 3.10);
+      tl.to("#mGasto", { scale: 0.36, duration: 0.44, ease: "power2.in" }, t + 3.10);
+      tl.to("#mGasto", { opacity: 0, duration: 0.12, ease: "none" }, t + 3.43);
+      pulse("#tOut", t + 3.50, 1.05);
+      count("#nOut", 0, DATA.bags, t + 3.50, 0.45);
+      count("#nBen", DATA.sale, DATA.sale - DATA.bags, t + 3.55, 0.75, "power3.out");
+      pulse("#benef", t + 3.60, 1.025);
+
+      /* 6.7 – 9.3 s · PÉRDIDAS (rápido) */
+      t = T.perdidas;
+      hlOut("#hl-caja", t);
+      navTo(1, t + 0.05);
+      tl.to("#caja .cj", { opacity: 0, y: 24, duration: 0.3, stagger: 0.025, ease: "power2.in" }, t);
+      tl.to("#caja", { opacity: 0, scale: 0.97, duration: 0.35, ease: "power2.in" }, t + 0.12);
+      // la tarjeta de beneficio continúa: se compacta y queda arriba como referencia
+      tl.to("#benef .full", { opacity: 0, duration: 0.16, ease: "power1.in" }, t);
+      tl.to("#benef", { x: -32, y: -288, width: 880, height: 88, duration: 0.65, ease: "power3.inOut" }, t + 0.05);
+      tl.to("#benef .compact", { opacity: 1, duration: 0.3, ease: "power1.out" }, t + 0.55);
+      hlIn("#hl-perd", t + 0.25);
+
+      tl.fromTo("#bunch", { opacity: 0, scale: 0.5, rotation: -14 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.4)" }, t + 0.18);
+      tl.to(["#bad2", "#bad3"], { opacity: 1, duration: 0.5, ease: "power1.inOut", stagger: 0.12 }, t + 0.58);
+      tl.to("#bunch", { keyframes: { rotation: [0, -3.5, 3, -2, 0] }, duration: 0.45, ease: "none" }, t + 0.62);
+      tl.fromTo("#perd", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, t + 0.85);
+      tl.fromTo("#perd .pj", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.42, stagger: 0.04, ease: "power3.out" }, t + 0.9);
+      press("#btnLoss", t + 1.15);
+      tl.to("#bunch", { scaleX: 1.12, scaleY: 0.86, duration: 0.12, ease: "power2.in" }, t + 1.2);
+      tl.to("#bunch", { scale: 0.28, opacity: 0, duration: 0.3, ease: "power3.in" }, t + 1.32);
+      tl.set("#mRow0", { opacity: 1 }, t + 1.3);
+      tl.to("#mRow0", { width: 816, height: 64, borderRadius: 4, backgroundColor: "#ffffff", duration: 0.55, ease: "power3.inOut" }, t + 1.32);
+      tl.to(["#row1", "#row2"], { y: 0, duration: 0.45, ease: "power3.inOut", stagger: 0.04 }, t + 1.36);
+      tl.to("#cRow0", { opacity: 1, duration: 0.25 }, t + 1.66);
+      tl.fromTo("#mRow0", { boxShadow: "0 0 0 0 rgba(192,58,42,0)" }, { boxShadow: "0 0 0 4px rgba(192,58,42,0.18)", duration: 0.3, ease: "power2.out" }, t + 1.8);
+      count("#nPHoy", 0, DATA.loss, t + 1.8, 0.5);
+      count("#nPMes", DATA.lossMonthBefore, DATA.lossMonthBefore + DATA.loss, t + 1.85, 0.55);
+      pulse("#pHoy", t + 1.8, 1.04);
+      // el beneficio de caja NO cambia
+      pulse("#benef", t + 2.2, 1.02);
+      tl.fromTo("#benef .tag", { scale: 0.85 }, { scale: 1, duration: 0.45, ease: "back.out(2)" }, t + 2.2);
+
+      /* 9.3 – 12.9 s · INVENTARIO (rápido, agrupación) */
+      t = T.inventario;
+      hlOut("#hl-perd", t);
+      navTo(3, t + 0.05);
+      tl.to("#perd .pj", { opacity: 0, y: 20, duration: 0.28, stagger: 0.02, ease: "power2.in" }, t);
+      tl.to("#perd", { opacity: 0, duration: 0.3, ease: "power2.in" }, t + 0.1);
+      tl.to("#benef", { opacity: 0, y: "-=30", duration: 0.32, ease: "power2.in" }, t);
+      // el registro de plátanos vuelve a ser fruta
+      tl.to("#cRow0", { opacity: 0, duration: 0.15 }, t);
+      tl.to("#mRow0", { width: 112, height: 112, borderRadius: 56, backgroundColor: "#f5d04a", boxShadow: "0 0 0 0 rgba(0,0,0,0)", duration: 0.4, ease: "power3.inOut" }, t + 0.05);
+      tl.to("#mRow0", { opacity: 0, duration: 0.15 }, t + 0.42);
+      tl.fromTo(lossBanana, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, t + 0.38);
+      tl.to(lossBanana, { x: 1500 - 1340, y: 300 - 600, rotation: 20, duration: 0.6, ease: "power3.out" }, t + 0.62);
+      hlIn("#hl-inv", t + 0.25);
+      tl.to("#btnAdd", { clipPath: "inset(0 0% 0 0)", duration: 0.55, ease: "expo.out" }, t + 0.3);
+      const FIELD_DELAYS = [0, 0.06, 0.15, 0.1, 0.24, 0.19, 0.3, 0.36, 0.28, 0.42];
+      fieldEls.forEach((el, i) => {
+        const f = FR[i];
+        tl.fromTo(el, { x: f[2][0], y: f[2][1], rotation: (i % 2 ? 1 : -1) * 60, opacity: 1 },
+          { x: 0, y: 0, rotation: (i % 2 ? 1 : -1) * 8, duration: 0.55 + (i % 3) * 0.07, ease: "expo.out" }, t + 0.35 + FIELD_DELAYS[i]);
+      });
+      // agrupación por tipo
+      const groups = [[], [], []];
+      FR.forEach((f, i) => groups[f[3]].push(fieldEls[i]));
+      groups[2].push(lossBanana);
+      const GT = t + 1.1;
+      groups.forEach((g, gi) => {
+        g.forEach((el, k) => {
+          const isLoss = el === lossBanana;
+          const base = isLoss ? [1340, 600] : FR[fieldEls.indexOf(el)][1];
+          const tx = CARD_X[gi] + ring[k][0] - base[0], ty = ICON_Y + ring[k][1] - base[1];
+          tl.to(el, { x: tx, y: ty, rotation: 0, scale: 0.82, duration: 0.72, ease: "power3.inOut" }, GT + k * 0.035 + gi * 0.05);
+          // se funden en la tarjeta
+          tl.to(el, { x: CARD_X[gi] - base[0], y: ICON_Y - base[1], scale: 0.55, opacity: 0, duration: 0.26, ease: "power2.in" }, GT + 0.95 + gi * 0.06);
+        });
+      });
+      [0, 1, 2].forEach((i) => {
+        tl.fromTo(`#inv${i}`, { opacity: 0, scale: 0.25, transformOrigin: "50% 21%" }, { opacity: 1, scale: 1, duration: 0.62, ease: "back.out(1.15)" }, GT + 1.05 + i * 0.06);
+      });
+      count("#kg0", 0, DATA.stock.apples, GT + 1.25, 0.6, "power2.out", (v) => Math.round(v));
+      count("#kg1", 0, DATA.stock.oranges, GT + 1.31, 0.6, "power2.out", (v) => Math.round(v));
+      count("#kg2", 0, 9, GT + 1.37, 0.45, "power2.out", (v) => Math.round(v));
+      tl.to("#fill0", { scaleX: 0.62, duration: 0.6, ease: "power3.out" }, GT + 1.25);
+      tl.to("#fill1", { scaleX: 0.75, duration: 0.6, ease: "power3.out" }, GT + 1.31);
+      tl.to("#fill2", { scaleX: 0.36, duration: 0.45, ease: "power3.out" }, GT + 1.37);
+      tl.fromTo(["#chip0", "#chip1", "#chip2ok"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.05 }, GT + 1.55);
+      // aviso de stock bajo en plátanos
+      const W = GT + 1.6;
+      count("#kg2", 9, DATA.stock.bananas, W, 0.4, "power2.inOut", (v) => Math.round(v));
+      tl.to("#fill2", { scaleX: 0.1, backgroundColor: "#c03a2a", duration: 0.5, ease: "power3.inOut" }, W);
+      tl.to("#kgWrap2", { color: "#bc3624", duration: 0.4 }, W + 0.05);
+      tl.to("#inv2", { borderColor: "#e8a99f", backgroundColor: "#fff7f5", duration: 0.45 }, W + 0.05);
+      tl.to("#chip2ok", { opacity: 0, duration: 0.15 }, W + 0.25);
+      tl.fromTo("#chip2low", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, W + 0.28);
+      tl.to("#inv2", { keyframes: { x: [0, -5, 5, -3, 0] }, duration: 0.32, ease: "none" }, W + 0.35);
+
+      /* 12.9 – 17.25 s · SUSCRIPCIONES */
+      t = T.suscrip;
+      hlOut("#hl-inv", t);
+      navTo(2, t + 0.05);
+      tl.to("#btnAdd", { clipPath: "inset(0 0 0 100%)", duration: 0.4, ease: "power3.in" }, t);
+      [0, 1, 2].forEach((i) => tl.to(`#inv${i}`, { opacity: 0, scale: 0.9, y: 30, duration: 0.32, ease: "power2.in" }, t + 0.05 + i * 0.05));
+      hlIn("#hl-subs", t + 0.25);
+      tl.fromTo(["#crateB", "#crateF"], { opacity: 1, y: 520 }, { y: 0, duration: 0.6, ease: "expo.out" }, t + 0.12);
+      const HOP_AT = [0.25, 0.37, 0.48, 0.62, 0.73];
+      hopEls.forEach((el, i) => {
+        const [, c, to] = HOP[i];
+        const at = t + HOP_AT[i];
+        const dx = to[0] - CARD_X[c], dy = to[1] - ICON_Y, d = 0.45;
+        tl.fromTo(el, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.18, ease: "power2.out" }, at - 0.18);
+        tl.to(el, { x: dx, rotation: (i % 2 ? 1 : -1) * 200, duration: d, ease: "power1.inOut" }, at);
+        tl.to(el, { y: Math.min(0, dy) - 150, duration: d * 0.45, ease: "power2.out" }, at);
+        tl.to(el, { y: dy, duration: d * 0.55, ease: "power2.in" }, at + d * 0.45);
+        tl.to(["#crateB", "#crateF"], { scaleY: 0.95, scaleX: 1.02, duration: 0.07, ease: "power1.out", transformOrigin: "50% 100%" }, at + d);
+        tl.to(["#crateB", "#crateF"], { scaleY: 1, scaleX: 1, duration: 0.25, ease: "back.out(2)" }, at + d + 0.07);
+      });
+      // el pack se cierra: la fruta se acomoda dentro
+      const PK = t + 1.22;
+      tl.to(hopEls, { y: "+=58", duration: 0.22, ease: "power2.in", stagger: 0.02 }, PK);
+      tl.to(hopEls, { opacity: 0, duration: 0.1 }, PK + 0.22);
+      tl.to(["#crateB", "#crateF"], { scaleX: 1.08, scaleY: 0.9, duration: 0.12, ease: "power2.in" }, PK + 0.3);
+      tl.to(["#aCrateB", "#aCrateF"], { x: 992 - 1340, y: 526 - 650, duration: 0.6, ease: "power3.inOut" }, PK + 0.42);
+      tl.to(["#crateB", "#crateF"], { scale: 0.36, duration: 0.6, ease: "power3.inOut" }, PK + 0.42);
+      tl.to("#subCard", { clipPath: "inset(0 0% 0 0 round 6px)", duration: 0.6, ease: "expo.out" }, PK + 0.7);
+      tl.fromTo("#subCard .sc", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: "power3.out" }, PK + 0.78);
+      tl.fromTo("#subsTop", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.55, ease: "expo.out" }, PK + 0.55);
+      tl.fromTo("#subsTop .sj", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 }, PK + 0.62);
+      // Pagó → confirmación → caja de hoy
+      const PAY = t + 2.4;
+      press("#btnPaid", PAY);
+      tl.to("#stPend", { opacity: 0, scale: 0.8, duration: 0.16, ease: "power2.in" }, PAY + 0.12);
+      tl.fromTo("#stPaid", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(2)" }, PAY + 0.2);
+      tl.fromTo("#ring", { opacity: 0.7, scale: 0.6 }, { opacity: 0, scale: 1.8, duration: 0.55, ease: "power2.out" }, PAY + 0.24);
+      tl.fromTo("#toast", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.36, ease: "expo.out" }, PAY + 0.3);
+      tl.to("#aToast", { y: 258 - 760, duration: 0.38, ease: "power3.inOut" }, PAY + 0.7);
+      tl.to("#toast", { scale: 0.35, duration: 0.38, ease: "power2.in" }, PAY + 0.7);
+      tl.to("#toast", { opacity: 0, duration: 0.1 }, PAY + 0.98);
+      pulse("#tCob", PAY + 1.06, 1.05);
+      count("#nCob", DATA.cobradoBefore, DATA.cobradoBefore + DATA.subPrice, PAY + 1.06, 0.45);
+      tl.to("#pk0", { yPercent: -110, duration: 0.35, ease: "power3.inOut" }, PAY + 1.2);
+      tl.to("#pk1", { yPercent: 0, duration: 0.45, ease: "back.out(1.6)" }, PAY + 1.22);
+      pulse("#tPacks", PAY + 1.22, 1.06);
+
+      /* 17.25 – 20.55 s · ESTADÍSTICAS (lento al final) */
+      t = T.stats;
+      hlOut("#hl-subs", t);
+      navTo(4, t + 0.05);
+      tl.to("#subsTop", { opacity: 0, y: -24, duration: 0.32, ease: "power2.in" }, t);
+      tl.to(["#crateB", "#crateF"], { opacity: 0, scale: 0.2, duration: 0.3, ease: "power2.in" }, t);
+      tl.to("#subCard", { opacity: 0, scale: 0.4, duration: 0.34, ease: "power3.in" }, t + 0.02);
+      hlIn("#hl-stats", t + 0.25);
+      CHIPS.forEach((c, i) => {
+        const el = chipEls[i];
+        const from = i === 1 ? { opacity: 0, scale: 0.4, x: 0, y: 0 } : { opacity: 0, scale: 0.6, x: (i % 2 ? 1 : -1) * 260, y: (i < 3 ? -1 : 1) * 160 };
+        tl.set(el, { xPercent: -50, yPercent: -50 }, 0);
+        tl.fromTo(el, from, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.42, ease: "expo.out" }, t + 0.08 + i * 0.055);
+        const dest = c[5];
+        tl.to(el, { x: dest[0] - c[4][0], y: dest[1] - c[4][1], scale: 0.45, duration: 0.4, ease: "power3.in" }, t + 0.74 + i * 0.03);
+        tl.to(el, { opacity: 0, duration: 0.1 }, t + 1.04 + i * 0.03);
+      });
+      tl.fromTo("#tabs", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, t + 0.35);
+      tl.fromTo("#statsCard", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, t + 0.4);
+      tl.fromTo(["#sIn", "#sOut", "#sLoss"], { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(1.4)", stagger: 0.06 }, t + 1.0);
+      // 1) ingresos
+      const S1 = t + 1.0;
+      count("#nSIn", 0, DATA.dayIn, S1, 0.62);
+      tl.to("#bIn", { scaleX: 1, duration: 0.62, ease: "power3.out" }, S1);
+      tl.to("#dIn", { opacity: 1, duration: 0.3 }, S1 + 0.3);
+      pulse("#sIn", S1 + 0.5, 1.035);
+      // 2) gastos
+      const S2 = S1 + 0.45;
+      count("#nSOut", 0, DATA.dayOut, S2, 0.55);
+      tl.to("#bOut", { scaleX: DATA.dayOut / DATA.dayIn, duration: 0.55, ease: "power3.out" }, S2);
+      tl.to("#dOut", { opacity: 1, duration: 0.3 }, S2 + 0.3);
+      pulse("#sOut", S2 + 0.45, 1.035);
+      // pérdidas, aparte
+      const S3 = S2 + 0.38;
+      count("#nSLoss", 0, DATA.loss, S3, 0.4);
+      tl.fromTo("#sNote", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, S3 + 0.1);
+      // 3) beneficio, desacelerando para leerlo
+      const S4 = S3 + 0.27;
+      tl.fromTo("#sBen", { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.7, ease: "expo.out" }, S4);
+      count("#nSBen", 0, DATA.dayBen, S4 + 0.05, 0.9, "power4.out");
+      tl.to("#fSBen", { opacity: 0.75, duration: 0.4 }, S4 + 0.5);
+
+      /* 20.55 – 21.8 s · EL PRODUCTO (rápido + cámara suave) */
+      t = T.producto;
+      hlOut("#hl-stats", t - 0.2);
+      tl.to(["#tabs", "#statsCard"], { x: -700, duration: 0.6, ease: "power3.inOut" }, t + 0.02);
+      tl.fromTo("#appHeader", { opacity: 0, y: -124 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, t + 0.62);
+      tl.fromTo(["#rc1", "#rc2", "#rc3"], { opacity: 0, x: 160 }, { opacity: 1, x: 0, duration: 0.55, ease: "expo.out", stagger: 0.07 }, t + 0.38);
+      tl.to("#bgDeep", { opacity: 1, duration: 0.6, ease: "power1.inOut" }, t + 0.15);
+      tl.fromTo("#app", { borderTopLeftRadius: "0px 0px", borderTopRightRadius: "0px 0px", borderBottomLeftRadius: "0px 0px", borderBottomRightRadius: "0px 0px" }, { scale: 0.78, x: 40, y: 74, borderTopLeftRadius: "22px 22px", borderTopRightRadius: "22px 22px", borderBottomLeftRadius: "22px 22px", borderBottomRightRadius: "22px 22px",
+        boxShadow: "0 60px 120px -50px rgba(10,70,35,0.55)", duration: 0.75, ease: "power2.inOut" }, t);
+      tl.to("#app", { scale: 0.765, duration: 0.5, ease: "none" }, t + 0.75);
+      tl.set("#hlProd", { opacity: 1 }, t + 0.42);
+      tl.fromTo("#hlProd h2 .ln > span", { yPercent: 112 }, { yPercent: 0, duration: 0.55, ease: "expo.out" }, t + 0.42);
+      tl.to("#hlProd .secs", { opacity: 1, duration: 0.25 }, t + 0.55);
+      [0, 1, 2, 3, 4].forEach((i) => {
+        const at = t + 0.6 + i * 0.12;
+        navTo(i, at, 0.12);
+        tl.fromTo(`#w${i}`, { color: "#7d8a83", scale: 1 }, { color: "#1e7644", scale: 1.08, duration: 0.12, ease: "power2.out" }, at);
+        tl.to(`#w${i}`, { scale: 1, duration: 0.25, ease: "power2.out" }, at + 0.12);
+      });
+
+      /* 21.8 – 25 s · EL CIERRE (calma, estable desde ~22.9 s) */
+      t = T.cierre;
+      tl.to(["#hlProd h2 .ln > span"], { yPercent: -135, duration: 0.32, ease: "power3.in" }, t);
+      tl.to("#hlProd .secs", { opacity: 0, duration: 0.2 }, t);
+      tl.set("#hlProd", { opacity: 0 }, t + 0.4);
+      tl.to("#appInner", { opacity: 0, duration: 0.22, ease: "power1.in" }, t);
+      tl.to("#app", { backgroundColor: "#ffffff", duration: 0.2 }, t);
+      tl.to("#app", { scaleX: 380 / 1920, scaleY: 380 / 1080, x: 0, y: 360 - 540, borderTopLeftRadius: "960px 540px", borderTopRightRadius: "960px 540px", borderBottomLeftRadius: "960px 540px", borderBottomRightRadius: "960px 540px", boxShadow: "0 40px 80px -40px rgba(20,100,55,0.45)", duration: 0.5, ease: "power3.inOut" }, t);
+      tl.to("#bgDeep", { opacity: 0, duration: 0.6 }, t + 0.1);
+      tl.to("#closeGlow", { opacity: 1, duration: 0.6 }, t + 0.1);
+      tl.set("#disc", { opacity: 1 }, t + 0.5);
+      tl.set("#app", { opacity: 0 }, t + 0.5);
+      tl.to("#disc", { keyframes: { scale: [1, 1.05, 1] }, duration: 0.5, ease: "power2.out" }, t + 0.5);
+      tl.fromTo("#bigLogo", { opacity: 0, scale: 0.35, rotation: -14, y: 30 }, { opacity: 1, scale: 1, rotation: 0, y: 0, duration: 0.55, ease: "back.out(1.3)" }, t + 0.42);
+      cfEls.forEach((el, i) => {
+        const c = CF[i];
+        tl.fromTo(el, { opacity: 0, x: c[3][0], y: c[3][1], rotation: c[4] - 50 * Math.sign(c[3][0]) },
+          { opacity: 1, x: 0, y: 0, rotation: c[4], duration: 0.55, ease: "expo.out" }, t + 0.4 + i * 0.035);
+      });
+      tl.set("#wm", { opacity: 1 }, t + 0.52);
+      tl.fromTo("#wm .ln > span", { yPercent: 112 }, { yPercent: 0, duration: 0.5, ease: "expo.out" }, t + 0.52);
+      tl.fromTo("#tag", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, t + 0.62);
+      tl.fromTo("#cta", { opacity: 0, y: 24, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" }, t + 0.7);
+
+      // texto editable desde DATA
+      $$("[data-k='saleAmt']").forEach((n) => (n.textContent = "+ " + fmt(DATA.sale)));
+      $$("[data-k='bagAmt']").forEach((n) => (n.textContent = "– " + fmt(DATA.bags)));
+      $$("[data-k='lossAmt']").forEach((n) => (n.textContent = fmt(DATA.loss)));
+      $("#nBenC").textContent = fmt(DATA.sale - DATA.bags);
+      $("[data-k='sumIn']").textContent = fmt(DATA.dayIn);
+      $("[data-k='sumOut']").textContent = fmt(DATA.dayOut);
+      $("[data-k='sumLoss']").textContent = fmt(DATA.loss);
+      $("[data-k='sumBen']").textContent = fmt(DATA.dayBen);
+      $("#dIn").textContent = `Ventas ${fmt(DATA.sale).slice(4)} · María ${fmt(DATA.subPrice).slice(4)}`;
+      $("#dOut").textContent = `Bolsas ${fmt(DATA.bags).slice(4)} · Proveedor ${fmt(DATA.supplier).slice(4)}`;
+      $("#fSBen").textContent = `${fmt(DATA.dayIn).slice(4)} – ${fmt(DATA.dayOut).slice(4)}`;
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+.hyperframes/
+renders/render.log
+renders/.hf-segments/
+node_modules/
