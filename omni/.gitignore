@@ -14,3 +14,4 @@ renders/*.mp3
 assets/audio_v1/
 assets/vo11/*.mp3
 assets/img/raw/
+renders/.*
