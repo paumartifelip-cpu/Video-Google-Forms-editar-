@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Omni 1.2 Flash — El calcetín del abuelo</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "InterX"; src: url("assets/fonts/Inter-Black.otf"); font-weight: 900; }
+      @font-face { font-family: "InterX"; src: url("assets/fonts/Inter-ExtraBold.otf"); font-weight: 800; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #ffffff; }
+      #film { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1080" data-height="1920" data-fps="60">
+      <canvas id="film" class="clip" data-start="0" data-duration="60" data-track-index="0" data-track-kind="graphics" width="1080" height="1920"></canvas>
+      <audio id="mix" class="clip" src="assets/audio/mix.wav" data-start="0" data-duration="60" data-track-index="1" data-volume="1"></audio>
+    </div>
+    <script src="assets/js/words.js"></script>
+    <script src="assets/js/core.js"></script>
+    <script src="assets/js/chars.js"></script>
+    <script src="assets/js/film.js"></script>
+    <script>
+      const cv = document.getElementById("film");
+      const ctx = cv.getContext("2d");
+      let ready = false, pending = 0;
+      function renderAt(t) { if (!ready) { pending = t; return; } FILM.renderAt(ctx, Math.min(t, 59.999)); }
+      window.renderAt = renderAt;
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      const tl = gsap.timeline({ paused: true });
+      tl.to({}, { duration: 60 }, 0);
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady.film = Promise.all([
+        document.fonts.load('900 100px "InterX"'),
+        document.fonts.load('800 100px "InterX"'),
+      ]).then(() => { FILM.init(); ready = true; renderAt(pending); });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

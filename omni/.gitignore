@@ -1,0 +1,9 @@
+node_modules/
+renders/.hf-*
+renders/*_raw.mp4
+assets/vo/*.wav
+assets/vo/trim/
+assets/audio/music.wav
+assets/audio/sfx.wav
+assets/audio/vo.wav
+.hyperframes/
