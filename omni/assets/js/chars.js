@@ -683,9 +683,10 @@
   // ---------------------------------------------------------------- padlock
   function padlock(c, t, o = {}) {
     const cr = o.crack ?? 0;
+    const body = P.rr(-140, -80, 280, 240, 40);
+    if (!o.cracksOnly) {
     const sh = new Path2D(); sh.arc(0, -70, 90, Math.PI, 0); sh.lineTo(60, -70); sh.arc(0, -70, 60, 0, Math.PI, true); sh.closePath();
     glass(c, sh, "#dfe5ef", { bb: [-90, -160, 180, 90], sb: 16 });
-    const body = P.rr(-140, -80, 280, 240, 40);
     // silhouette of the second sock behind the glass
     c.save(); c.clip(body);
     c.globalAlpha = 0.2 + 0.45 * (o.reveal ?? 0);
@@ -694,6 +695,7 @@
     glass(c, body, C.B, { bb: [-140, -80, 280, 240], sb: 40, alpha: 0.72 });
     glass(c, P.circle(0, 20, 22), C.K, { bb: [-22, -2, 44, 44], noShadow: true, lw: 2 });
     c.fillStyle = C.K; c.fillRect(-8, 30, 16, 50);
+    }
     // cracks with light leaking through
     if (cr > 0) {
       const rnd = K.mulberry(11);

@@ -9,3 +9,8 @@ assets/audio/vo.wav
 .hyperframes/
 renders/work-*/
 renders/.omni_raw*
+renders/*.mp4
+renders/*.mp3
+assets/audio_v1/
+assets/vo11/*.mp3
+assets/img/raw/

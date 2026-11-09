@@ -20,6 +20,7 @@
     <script src="assets/js/words.js"></script>
     <script src="assets/js/core.js"></script>
     <script src="assets/js/chars.js"></script>
+    <script src="assets/js/img.js"></script>
     <script src="assets/js/film.js"></script>
     <script>
       const cv = document.getElementById("film");
@@ -35,6 +36,7 @@
       window.__hf.buildReady.film = Promise.all([
         document.fonts.load('900 100px "InterX"'),
         document.fonts.load('800 100px "InterX"'),
+        window.IMG_READY,
       ]).then(() => { FILM.init(); ready = true; renderAt(pending); });
       window.__timelines["main"] = tl;
     </script>

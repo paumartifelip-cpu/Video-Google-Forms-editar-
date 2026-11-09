@@ -118,14 +118,33 @@ def word_times(x, words):
     seams = np.maximum.accumulate(np.array([0] + seams + [total]))
     return [(float(seams[i]), float(seams[i + 1])) for i in range(len(words))]
 
+import os
+SRC = os.environ.get("VO_SRC", "assets/vo/tight")
+NATIVE_WHISPER = os.environ.get("VO_NATIVE_WHISPER") == "1"
+MAXK = float(os.environ.get("VO_MAXK", "1.22"))
+
+def schedule():
+    """Fit each line into its 2 s beat: start on its cue (or right after the previous line), speed up at most MAXK."""
+    out, prev_end = [], 0.0
+    for i, (idx, start, _k, text, wh) in enumerate(LINES):
+        d = len(load(ROOT / f"{SRC}/{idx:02d}.wav")) / SR
+        st = max(start, prev_end + 0.04)
+        nxt = LINES[i + 1][1] + 0.25 if i + 1 < len(LINES) else 58.5
+        k = min(MAXK, max(1.0, d / max(0.3, nxt - st)))
+        out.append((idx, st, k, text, wh))
+        prev_end = st + d / k
+    return out
+
 def main():
     vo = np.zeros(int(SR * DUR) + SR, np.float32)
     data = []
-    for idx, start, k, text, wh in LINES:
-        x = load(ROOT / f"assets/vo/tight/{idx:02d}.wav")
+    for idx, start, k, text, wh in (schedule() if SRC != "assets/vo/tight" else LINES):
+        x = load(ROOT / f"{SRC}/{idx:02d}.wav")
         x = tempo(x, k)
-        if wh:
+        if wh and not NATIVE_WHISPER:
             x = whisperize(x)
+        if wh and NATIVE_WHISPER:
+            x = x * 2.4
         fade = int(0.008 * SR)
         x[:fade] *= np.linspace(0, 1, fade); x[-fade:] *= np.linspace(1, 0, fade)
         s = int(start * SR)

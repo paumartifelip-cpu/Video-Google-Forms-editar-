@@ -140,7 +140,7 @@
     c.rotate(-0.12 * inh + 0.1 * snap);
     c.scale(1 - 0.03 * inh + 0.04 * snap, 1 + 0.05 * inh - 0.06 * snap);
     c.translate(-540, -1500);
-    c.save(); c.translate(230, 340); c.rotate(0.5 + Math.sin(t * 3) * 0.15); c.scale(0.24, 0.24); CH.sock(c, { sb: 8 }); c.restore();
+    c.save(); c.translate(255, 470); c.rotate(0.5 + Math.sin(t * 3) * 0.15); c.scale(0.24, 0.24); CH.sock(c, { sb: 8 }); c.restore();
     CH.cow(c, t, { nostril: 1 + 0.45 * inh, squint: clamp(inh * 1.2 + (t > 6.0 && t < 6.25 ? 0.6 : 0), 0, 0.85), look: Math.sin(t * 1.3) });
     c.restore();
     // snot-mist burst from the nostrils
@@ -150,7 +150,7 @@
       for (let i = 0; i < 14; i++) {
         const a = -Math.PI / 2 + (i - 7) * 0.2;
         const r = 40 + 500 * outExpo(q);
-        glass(c, P.circle(540 + Math.cos(a) * r, 1150 + Math.sin(a) * r, 14 + 20 * q), "#cfe0ff", { bb: [0, 0, 1, 1], noShadow: true, lw: 2 });
+        glass(c, P.circle(540 + Math.cos(a) * r, 1095 + Math.sin(a) * r, 14 + 20 * q), "#cfe0ff", { bb: [0, 0, 1, 1], noShadow: true, lw: 2 });
       }
       c.restore();
     }
@@ -159,7 +159,7 @@
       const t0 = 6.08 + i * 0.035;
       if (t < t0) return;
       const q = tw(t, t0, 0.55, os);
-      const sx = i % 2 ? 650 : 430, sy = 1150;
+      const sx = i % 2 ? 602 : 478, sy = 1095;
       const x = lerp(sx, L.x, q), y = lerp(sy, L.y, q) - bell(clamp((t - t0) / 0.62)) * 120;
       const spin = (1 - clamp((t - t0) / 0.5)) * (i % 2 ? 6 : -6);
       const hit = kick(t, t0 + 0.5, 4, 8);
@@ -210,7 +210,7 @@
     CH.elevator(c, t, { open, ding: t > 12.75, inner: (cc) => {
       if (open <= 0) return;
       const wave = Math.sin((t - 12.9) * 2 * Math.PI * 2.2) * 0.3 * clamp((t - 13.0) / 0.2);
-      cc.save(); cc.translate(-40, 230); cc.rotate(wave); cc.translate(0, -120); cc.scale(0.62, 0.62);
+      cc.save(); cc.translate(-30, 300); cc.rotate(wave); cc.translate(0, -125); cc.scale(0.6, 0.6);
       CH.sock(cc, {}); cc.restore();
     } });
     c.restore();
@@ -286,7 +286,7 @@
       c.restore();
     }
   }
-  const BUS_WIN = { x: 540 - 20, y: 1010 - 115, r: 62 };
+  const BUS_WIN = { x: 370, y: 932, r: 55 };
 
   // ---------------------------------------------------------------- W8: the 2 is a swan; it dives into a bathtub; the water writes Flow
   function w8(c, t) {
@@ -382,7 +382,7 @@
     });
     c.save(); c.translate(540, 760 + Math.abs(Math.sin(t * Math.PI * 2)) * -12); c.rotate(baton * 0.05); CH.pineapple(c, t, { baton }); c.restore();
   }
-  const CROWN = { x: 540, y: 760 - 380, r: 60 };
+  const CROWN = { x: 540, y: 350, r: 60 };
 
   // ---------------------------------------------------------------- W11: inside the crown, a forest; a deer talks on the phone
   const TREES = (() => { const r = mulberry(5), a = []; for (let i = 0; i < 12; i++) a.push({ x: r() * 1300 - 110, y: 900 + r() * 500, h: 380 + r() * 420, d: 0.4 + r() * 0.8, col: [C.G, darken(C.G, 0.15), lighten(C.G, 0.25), C.B][i % 4] }); return a.sort((p, q) => p.d - q.d); })();
@@ -428,7 +428,7 @@
     // mustache flies in and sticks
     const m = tw(t, 34.35, 0.45, os);
     if (t > 34.3) {
-      c.save(); c.translate(lerp(-900, 0, m), lerp(-500, 70, m)); c.rotate((1 - clamp((t - 34.35) / 0.45)) * 9);
+      c.save(); c.translate(lerp(-900, 0, m), lerp(-500, 48, m)); c.rotate((1 - clamp((t - 34.35) / 0.45)) * 9);
       c.scale(0.75 * (1 + 0.15 * hit), 0.75 * (1 - 0.1 * hit)); CH.mustache(c); c.restore();
     }
     c.restore();
@@ -473,7 +473,7 @@
       c.scale(1.1 * (1 + 0.08 * land), 1.1 * (1 - 0.08 * land)); CH.umbrella(c, C.R, 0.15 + 0.85 * open); c.restore();
     }
   }
-  const UMB_ANCHOR = { x: 540, y: 1250 - 120 - 100, r: 110 };
+  const UMB_ANCHOR = { x: 540, y: 1080, r: 110 };
 
   // ---------------------------------------------------------------- W14/15: grandpa's living room; lamp off (black); lights on
   function w14(c, t) {
@@ -481,19 +481,19 @@
     CH.livingRoom(c, t, { lamp: flick });
     if (t >= 43.98) drawGrandpa(c, t);
   }
-  function trophySock(c, t, ex, ey) {
+  function trophySock(c, t, ex, ey, raise = 1) {
     const un = tw(t, 54.25, 1.8, sine); // unravel progress
     if (un >= 1) return;
-    c.save(); c.translate(ex + 10, ey - 150); c.rotate(-0.15 + Math.sin(t * 3) * 0.05); c.scale(0.62, 0.62);
+    c.save(); c.translate(ex + 10, ey - 150 + (1 - clamp(raise)) * 120); c.scale(clamp(raise), clamp(raise)); c.rotate(-0.15 + Math.sin(t * 3) * 0.05); c.scale(0.62, 0.62);
     c.beginPath(); c.rect(-200, -260 + 480 * un, 520, 520); c.clip();
     CH.sock(c, {}); c.restore();
   }
   // where the trophy sock sits in world coordinates (used for the thread)
-  function trophyPoint(t) { const raise = 1; const ang = lerp(0.4, -1.25, raise); return { x: 560 + 180 + Math.cos(ang) * 230 + 10, y: 1050 - 270 + Math.sin(ang) * 230 - 150 }; }
+  function trophyPoint(t) { return { x: 560 + CH.FIST.x + 10, y: 1050 + CH.FIST.y - 150 }; }
   function drawGrandpa(c, t) {
     const raise = tw(t, 44.02, 0.6, os);
     c.save(); c.translate(560, 1050);
-    CH.grandpa(c, t, { raise, trophy: (cc, ex, ey) => trophySock(cc, t, ex, ey) });
+    CH.grandpa(c, t, { raise, trophy: (cc, ex, ey, r) => trophySock(cc, t, ex, ey, r) });
     // padlock above the bare foot
     const pl = tw(t, 46.75, 0.45, os);
     if (pl > 0) {
@@ -574,7 +574,7 @@
     if (t < 11.6) return w2(c, t);
     if (t < 12.4) return pan(c, t, 11.6, 0.8, w2, w3, 0, 1920);
     if (t < 13.7) return w3(c, t);
-    if (t < 14.4) return zoomIn(c, t, 13.7, 0.7, (cc, tt) => { cc.save(); cc.translate(540, 930); cc.restore(); w3(cc, tt); }, w4, { x: 540, y: 950, r: 190 });
+    if (t < 14.4) return zoomIn(c, t, 13.7, 0.7, (cc, tt) => { cc.save(); cc.translate(540, 930); cc.restore(); w3(cc, tt); }, w4, { x: 540, y: 990, r: 150 });
     if (t < 15.8) return w4(c, t);
     if (t < 16.4) {
       // the 3 liquefies into the flamingo while white floods back from its centre
@@ -722,7 +722,7 @@
       const g = GROUPS[gi];
       // line 13 (the whisper) also stays for the fall + climb back
       const special = g.line === 13;
-      const end = special ? 29.75 : g.out;
+      const end = special ? 29.95 : g.out;
       if (t < g.s - 0.02 || t >= end) continue;
       const big = g.line === 21; // "¿Y el abuelo?" alone in the black
       const size = big ? 128 : FS;
@@ -766,14 +766,14 @@
         // the whisper line: falls off the bottom edge after the camera turns, then climbs back up a rope
         let rope = null;
         if (special) {
-          const fallQ = clamp((t - 27.5 - i * 0.07) / 0.55);
-          const climb = clamp((t - 28.65 - i * 0.16) / 0.6);
+          const fallQ = clamp((t - 27.95 - i * 0.06) / 0.5);
+          const climb = clamp((t - 28.8 - i * 0.14) / 0.55);
           const downScreen = 1100 * fallQ * fallQ * (1 - os(climb, 0.05));
           // screen-down while the camera is rolled
           py += downScreen * Math.cos(R);
           px += Math.sin(t * 9 + i) * 10 * bell(climb);
           if (climb > 0 && climb < 1) rope = cx;
-          if (t > 29.45) al *= 1 - clamp((t - 29.45) / 0.3);
+          if (t > 29.65) al *= 1 - clamp((t - 29.65) / 0.3);
         }
         if (rope !== null) {
           c.save(); c.strokeStyle = rgba(darken(C.Y, 0.3), 0.9); c.lineWidth = 6; c.setLineDash([14, 8]);
