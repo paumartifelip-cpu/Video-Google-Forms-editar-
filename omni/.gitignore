@@ -7,3 +7,5 @@ assets/audio/music.wav
 assets/audio/sfx.wav
 assets/audio/vo.wav
 .hyperframes/
+renders/work-*/
+renders/.omni_raw*
